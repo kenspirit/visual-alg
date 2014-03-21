@@ -1,0 +1,13 @@
+.sortFrame {
+
+}
+
+.sortItem {
+  background-color: blue;
+  border: 1px solid black;
+  float: left;
+}
+
+.compareItem {
+  background-color: red;
+}

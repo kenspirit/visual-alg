@@ -1,0 +1,27 @@
+<link rel="stylesheet" type="text/css" href="sorting.css"/>
+<link rel="stylesheet" type="text/css" href="bootstrap.css"/>
+<script src="angular.js"></script>
+<script src="ui-bootstrap-tpls-0.10.0.js"></script>
+<script src="sorting.js"></script>
+<div ng-app="SortAlg" ng-controller="SortCtrl">
+  <div class="form-group">
+      <div class="btn-group">
+        <button ng-repeat="method in sortingMethods.options" type="button" class="btn btn-primary btn-sm" ng-model="sortingMethods.selected" btn-radio="'{{method}}'">{{method}}</button>
+      </div>
+  </div>
+  <div class="form-group">
+      <div class="col-sm-6">
+        <input type="text" class="form-control" id="sortSource" placeholder="Comma separated value" ng-model="sortSource">
+      </div>
+  </div>
+  <div class="form-group">
+    <div class="col-sm-12">
+      <bar-chart dataset="sortData"/>
+    </div>
+  </div>
+  <div class="form-group">
+    <div class="col-sm-12">
+      <button class="btn btn-sm btn-info" ng-click="start()">Start</button>
+    </div>
+  </div>
+</div>
