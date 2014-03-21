@@ -1,13 +1,7 @@
 var app = angular.module('SortAlg', ['ui.bootstrap']);
-  app
-    // .config(['$routeProvider', function($routeProvider)  {
-    //   $routeProvider
-    //     .when('/sort', {templateUrl: 'alg/sort.html', controller: 'SortCtrl'})
-    //     .otherwise({redirectTo: '/sort'});
-    // }])
-    .service('Shuffler', function() {
+  app.service('Shuffler', function() {
       var Shuffler = {};
-      function shuffle(o){ //v1.0
+      function shuffle(o){
         for(var j, x, i = o.length; i; j = Math.floor(Math.random() * i), x = o[--i], o[i] = o[j], o[j] = x);
         return o;
       };
@@ -19,10 +13,6 @@ var app = angular.module('SortAlg', ['ui.bootstrap']);
         restrict: 'E',
         replace: true,
         scope: {dataset: '='},
-        // template: '<div class="sortFrame" style="height: {{graph.height}}px;">'
-        //   + '<span ng-repeat="data in dataset" class="sortItem" style="margin-top: {{graph.height - height(data.val)}}px;height: {{height(data.val)}}px; width: {{width()}}px;">'
-        //   + '</span>'
-        //   + '</div>',
         template: '<svg ng-attr-width="{{graph.width}}" ng-attr-height="{{graph.height}}">'
           + '    <rect ng-attr-style="{{data.style}}" ng-repeat="data in dataset"'
           + '        ng-attr-width="{{width()}}"'
@@ -121,63 +111,81 @@ var app = angular.module('SortAlg', ['ui.bootstrap']);
         nextToCompare: 'fill:blue;'
       };
 
+      InsertionSort.paint = function() {
+        var currentIdx = processing.currentIdx;
+        var nextIdx = processing.nextIdx;
+        var smallestIdx = processing.smallestIdx;
+        var isSwap = processing.isSwap;
+
+        if (isSwap) {
+          sortData[smallestIdx].style = style.default;
+          sortData[nextIdx].style = style.smallestInLoop;
+          sortData[currentIdx].style = style.currentlySeen;
+          $rootScope.$apply();
+          return;
+        }
+
+        // Draw currently seen bar
+        if (currentIdx == sortData.length) {
+          // all items processed
+          sortData[currentIdx - 1].style = style.default;
+          $rootScope.$apply();
+          return;
+        }
+
+        sortData[currentIdx].style = style.currentlySeen;
+        // Draw the bar with smallest value compared so far
+        sortData[smallestIdx].style = style.smallestInLoop + style.currentlyCompare;
+
+        // Draw the next item to compare
+        sortData[nextIdx + 1].style = style.default;
+        if (nextIdx != -1) {
+          sortData[nextIdx].style = style.nextToCompare + style.currentlyCompare;
+        } else {
+          // reach to the end of the loop, clear the smallest highlight
+          sortData[smallestIdx].style = style.default;
+        }
+
+        $rootScope.$apply();
+      };
+
       InsertionSort.intervalCompare = function() {
         var currentIdx = processing.currentIdx;
         var nextIdx = processing.nextIdx;
         var smallestIdx = processing.smallestIdx;
 
+        this.paint();
+
         if (currentIdx == sortData.length) {
           // all items processed
-          sortData[currentIdx - 1].style = style.default;
-          $rootScope.$apply();
           clearInterval(processing.id);
           return;
         }
 
-        // Currently seen item.
-        sortData[currentIdx].style = style.currentlySeen;
-        sortData[smallestIdx].style = style.smallestInLoop + style.currentlyCompare;
-        $rootScope.$apply();
-
         if (nextIdx < 0) {
           // Inner loop scan complete.  Start on next unseen item.
-          // No need highlight the smallest item in this loop
-          sortData[smallestIdx].style = style.default;
-
           currentIdx++;
           processing.currentIdx = currentIdx;
           processing.nextIdx = currentIdx - 1;
           processing.smallestIdx = currentIdx;
           return;
         }
-        // The next item to compare
-        sortData[processing.nextIdx].style = style.nextToCompare + style.currentlyCompare;
-        $rootScope.$apply();
 
         if (processing.isSwap === true) {
           this.swap(sortData, nextIdx, smallestIdx);
-
-          // After swap, highlight changed from original smallest item
-          // to current compared one
-          sortData[smallestIdx].style = style.default;
-          sortData[nextIdx].style = style.smallestInLoop;
-          sortData[currentIdx].style = style.currentlySeen;
+          this.paint();
 
           processing.isSwap = false;
           processing.smallestIdx = nextIdx;
           processing.nextIdx--;
-          $rootScope.$apply();
           return;
         }
 
         if (this.isLarger(sortData, nextIdx, smallestIdx)) {
           processing.isSwap = true;
         } else {
-          sortData[nextIdx].style = style.default;
           processing.nextIdx--;
         }
-
-        $rootScope.$apply();
       };
 
       InsertionSort.sort = function(items, interval) {
