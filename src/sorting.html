@@ -1,6 +1,7 @@
 <link rel="stylesheet" type="text/css" href="sorting.css"/>
 <link rel="stylesheet" type="text/css" href="bootstrap.css"/>
 <script src="angular.js"></script>
+<script src="angular-sanitize.js"></script>
 <script src="ui-bootstrap-tpls-0.10.0.js"></script>
 <script src="sorting.js"></script>
 <div ng-app="SortAlg" ng-controller="SortCtrl">
@@ -17,6 +18,11 @@
   <div class="form-group">
     <div class="col-sm-12">
       <bar-chart dataset="sortData"/>
+    </div>
+  </div>
+  <div class="form-group">
+    <div class="col-sm-6">
+      <pre ng-bind-html="trustedCode(algText)"></pre>
     </div>
   </div>
   <div class="form-group">
