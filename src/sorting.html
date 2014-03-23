@@ -1,33 +1,41 @@
-<link rel="stylesheet" type="text/css" href="sorting.css"/>
 <link rel="stylesheet" type="text/css" href="bootstrap.css"/>
+<link rel="stylesheet" type="text/css" href="sorting.css"/>
 <script src="angular.js"></script>
 <script src="angular-sanitize.js"></script>
 <script src="ui-bootstrap-tpls-0.10.0.js"></script>
 <script src="sorting.js"></script>
-<div ng-app="SortAlg" ng-controller="SortCtrl">
+<form name="myForm" class="form-horizontal" ng-app="SortAlg" ng-controller="SortCtrl">
   <div class="form-group">
-      <div class="btn-group">
-        <button ng-repeat="method in sortingMethods.options" type="button" class="btn btn-primary btn-sm" ng-model="sortingMethods.selected" btn-radio="'{{method}}'">{{method}}</button>
+      <label class="col-sm-2 control-label">Method</label>
+      <div class="col-sm-10">
+        <button ng-repeat="method in sortingMethods.options" type="button" class="btn btn-sm btn-success" ng-model="sortingMethods.selected" btn-radio="'{{method}}'" ng-click="changeAlg(method)">{{method}}</button>
       </div>
   </div>
   <div class="form-group">
-      <div class="col-sm-6">
-        <input type="text" class="form-control" id="sortSource" placeholder="Comma separated value" ng-model="sortSource">
-      </div>
+    <label class="col-sm-2 control-label">Data</label>
+    <div class="col-sm-2">
+      <button ng-repeat="source in dataSource.options" type="button" class="btn btn-info btn-sm" ng-model="dataSource.selected" btn-radio="'{{source}}'" ng-click="changeSource(source)">{{source}}</button>
+    </div>
+    <div class="col-sm-4" ng-class="{'has-error': myForm.data.$invalid}">
+      <input type="text" name="data" class="form-control" id="sortSource" placeholder="Comma separated number" ng-model="sortSource" required ng-pattern="/^[0-9]+(,[0-9]+)*$/" ng-change="updateSortData(sortSource)">
+      <span class="help-block" ng-show="myForm.data.$error.required">Required!</span>
+      <span class="help-block" ng-show="myForm.data.$error.pattern">Format: Comma separated number w/o extra space or comma</span>
+    </div>
   </div>
   <div class="form-group">
-    <div class="col-sm-12">
+    <div class="col-sm-offset-2 col-sm-10">
+      <button class="btn btn-sm btn-danger" ng-model="status" ng-click="start(status)" btn-checkbox btn-checkbox-true="'Start'" btn-checkbox-false="'Stop'">{{status}}</button>
+      <button class="btn btn-sm btn-warning" ng-click="step()">Step</button>
+    </div>
+  </div>
+  <div class="form-group">
+    <div class="col-sm-offset-2 col-sm-10">
       <bar-chart dataset="sortData"/>
     </div>
   </div>
   <div class="form-group">
-    <div class="col-sm-6">
+    <div class="col-sm-offset-2 col-sm-6">
       <pre ng-bind-html="trustedCode(algText)"></pre>
     </div>
   </div>
-  <div class="form-group">
-    <div class="col-sm-12">
-      <button class="btn btn-sm btn-info" ng-click="start()">Start</button>
-    </div>
-  </div>
-</div>
+</form>

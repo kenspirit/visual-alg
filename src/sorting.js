@@ -56,7 +56,9 @@ var app = angular.module('SortAlg', ['ngSanitize', 'ui.bootstrap']);
       function SortAlgBase(name) {
           this.name = name;
           this.sortData = [];
-          this.processing;
+          this.scope;
+          this.interval = -1;
+
           this.style = {
             default: 'fill:rgb(123, 123, 123);stroke:white;stroke-width:1',
             currentlySeen: 'fill:green;',
@@ -66,6 +68,18 @@ var app = angular.module('SortAlg', ['ngSanitize', 'ui.bootstrap']);
 
           this.getName = function() {
             return this.name;
+          }
+
+          this.apply = function() {
+            if (this.interval > 0) {
+              $rootScope.$apply();
+            } else {
+              // var phase = $rootScope.$$phase;
+              setTimeout(function() {$rootScope.$apply();}, 1);
+              // if(phase != '$apply' && phase != '$digest') {
+              //   $rootScope.$apply();
+              // }
+            }
           }
 
           this.isLarger = function(items, srcIdx, targetIdx) {
@@ -82,16 +96,37 @@ var app = angular.module('SortAlg', ['ngSanitize', 'ui.bootstrap']);
           };
 
           this.init = function() {
-            this.processing = {};
+            this.scope.processing = {};
           }
 
-          this.start = function(items, interval) {
-            this.init();
+          this.start = function(scope, items, interval) {
+            this.interval = interval;
+            this.scope = scope;
             this.sortData = items;
-            this.processing.id = setInterval(this.step.bind(this), interval);
+            this.init();
+            if (interval > 0) {
+              this.scope.processing.id = setInterval(this.step.bind(this), interval);
+            } else {
+              this.step();
+            }
           };
 
-          this.step = function(items) {
+          this.stop = function() {
+            clearInterval(this.scope.processing.id);
+            this.scope.status = 'Start';
+          }
+
+          this.nextStep = function(scope, items) {
+            this.interval = -1;
+            if (!this.scope) {
+              this.scope = scope;
+              this.sortData = items;
+              this.init();
+            }
+            this.step();
+          }
+
+          this.step = function() {
             // to be implemented by child
           };
 
@@ -106,12 +141,11 @@ var app = angular.module('SortAlg', ['ngSanitize', 'ui.bootstrap']);
 
         return SortAlgBase;
     }])
-    .factory('SelectionSort', ['SortAlgBase', '$rootScope',
-      function(SortAlgBase, $rootScope) {
+    .factory('SelectionSort', ['SortAlgBase', function(SortAlgBase) {
         var SelectionSort = new SortAlgBase('Selection');
 
         SelectionSort.init = function() {
-          this.processing = {
+          this.scope.processing = {
             currentIdx: 0,
             nextIdx: 1,
             smallestIdx: 0
@@ -119,37 +153,38 @@ var app = angular.module('SortAlg', ['ngSanitize', 'ui.bootstrap']);
         }
 
         SelectionSort.step = function() {
-          var currentIdx = this.processing.currentIdx;
-          var nextIdx = this.processing.nextIdx;
-          var smallestIdx = this.processing.smallestIdx;
+          var currentIdx = this.scope.processing.currentIdx;
+          var nextIdx = this.scope.processing.nextIdx;
+          var smallestIdx = this.scope.processing.smallestIdx;
 
-          if (this.processing.isLoopEnd == true) {
+          if (this.scope.processing.isLoopEnd == true) {
             if (currentIdx != smallestIdx) {
               this.swap(this.sortData, currentIdx, smallestIdx);
             }
             this.sortData[smallestIdx].style = this.style.default;
             this.sortData[currentIdx].style = this.style.default;
             this.sortData[nextIdx - 1].style = this.style.default;
-            $rootScope.$apply();
+            this.apply();
 
-            this.processing.isLoopEnd = false;
+            this.scope.processing.isLoopEnd = false;
             currentIdx++;
 
-            this.processing.currentIdx = currentIdx;
-            this.processing.smallestIdx = currentIdx;
-            this.processing.nextIdx = currentIdx + 1;
+            this.scope.processing.currentIdx = currentIdx;
+            this.scope.processing.smallestIdx = currentIdx;
+            this.scope.processing.nextIdx = currentIdx + 1;
             return;
           }
 
           if (currentIdx == this.sortData.length) {
             // all items processed
             this.sortData[currentIdx - 1].style = this.style.default;
+            this.stop();
             return;
           }
 
-          if (this.processing.nextIdx == this.sortData.length) {
+          if (this.scope.processing.nextIdx == this.sortData.length) {
             // inner loop complete
-            this.processing.isLoopEnd = true;
+            this.scope.processing.isLoopEnd = true;
             return;
           }
 
@@ -159,13 +194,13 @@ var app = angular.module('SortAlg', ['ngSanitize', 'ui.bootstrap']);
           if (nextIdx - 1 != smallestIdx && nextIdx - 1 != currentIdx) {
               this.sortData[nextIdx - 1].style = this.style.default;
           }
-          $rootScope.$apply();
+          this.apply();
 
           if (this.isLarger(this.sortData, smallestIdx, nextIdx)) {
             this.sortData[smallestIdx].style = this.style.default;
-            this.processing.smallestIdx = nextIdx;
+            this.scope.processing.smallestIdx = nextIdx;
           }
-          this.processing.nextIdx++;
+          this.scope.processing.nextIdx++;
         }
 
         SelectionSort.sort = function(items) {
@@ -184,8 +219,7 @@ var app = angular.module('SortAlg', ['ngSanitize', 'ui.bootstrap']);
 
         return SelectionSort;
     }])
-    .factory('InsertionSort', ['SortAlgBase', '$rootScope',
-        function(SortAlgBase, $rootScope) {
+    .factory('InsertionSort', ['SortAlgBase', function(SortAlgBase) {
       var InsertionSort = new SortAlgBase('Insertion');
       var style = {
         default: 'fill:rgb(123, 123, 123);stroke:white;stroke-width:1',
@@ -195,16 +229,16 @@ var app = angular.module('SortAlg', ['ngSanitize', 'ui.bootstrap']);
       };
 
       InsertionSort.paint = function() {
-        var currentIdx = this.processing.currentIdx;
-        var nextIdx = this.processing.nextIdx;
-        var smallestIdx = this.processing.smallestIdx;
-        var isSwap = this.processing.isSwap;
+        var currentIdx = this.scope.processing.currentIdx;
+        var nextIdx = this.scope.processing.nextIdx;
+        var smallestIdx = this.scope.processing.smallestIdx;
+        var isSwap = this.scope.processing.isSwap;
 
         if (isSwap) {
           this.sortData[smallestIdx].style = style.default;
           this.sortData[nextIdx].style = style.smallestInLoop;
           this.sortData[currentIdx].style = style.currentlySeen;
-          $rootScope.$apply();
+          this.apply();
           return;
         }
 
@@ -212,7 +246,7 @@ var app = angular.module('SortAlg', ['ngSanitize', 'ui.bootstrap']);
         if (currentIdx == this.sortData.length) {
           // all items processed
           this.sortData[currentIdx - 1].style = style.default;
-          $rootScope.$apply();
+          this.apply();
           return;
         }
 
@@ -229,11 +263,11 @@ var app = angular.module('SortAlg', ['ngSanitize', 'ui.bootstrap']);
           this.sortData[smallestIdx].style = style.default;
         }
 
-        $rootScope.$apply();
+        this.apply();
       };
 
       InsertionSort.init = function() {
-        this.processing = {
+        this.scope.processing = {
           currentIdx: 0,
           nextIdx: -1,
           smallestIdx: 0
@@ -241,41 +275,41 @@ var app = angular.module('SortAlg', ['ngSanitize', 'ui.bootstrap']);
       }
 
       InsertionSort.step = function() {
-        var currentIdx = this.processing.currentIdx;
-        var nextIdx = this.processing.nextIdx;
-        var smallestIdx = this.processing.smallestIdx;
+        var currentIdx = this.scope.processing.currentIdx;
+        var nextIdx = this.scope.processing.nextIdx;
+        var smallestIdx = this.scope.processing.smallestIdx;
 
         this.paint();
 
         if (currentIdx == this.sortData.length) {
           // all items processed
-          clearInterval(this.processing.id);
+          this.stop();
           return;
         }
 
         if (nextIdx < 0) {
           // Inner loop scan complete.  Start on next unseen item.
           currentIdx++;
-          this.processing.currentIdx = currentIdx;
-          this.processing.nextIdx = currentIdx - 1;
-          this.processing.smallestIdx = currentIdx;
+          this.scope.processing.currentIdx = currentIdx;
+          this.scope.processing.nextIdx = currentIdx - 1;
+          this.scope.processing.smallestIdx = currentIdx;
           return;
         }
 
-        if (this.processing.isSwap === true) {
+        if (this.scope.processing.isSwap === true) {
           this.swap(this.sortData, nextIdx, smallestIdx);
           this.paint();
 
-          this.processing.isSwap = false;
-          this.processing.smallestIdx = nextIdx;
-          this.processing.nextIdx--;
+          this.scope.processing.isSwap = false;
+          this.scope.processing.smallestIdx = nextIdx;
+          this.scope.processing.nextIdx--;
           return;
         }
 
         if (this.isLarger(this.sortData, nextIdx, smallestIdx)) {
-          this.processing.isSwap = true;
+          this.scope.processing.isSwap = true;
         } else {
-          this.processing.nextIdx--;
+          this.scope.processing.nextIdx--;
         }
       };
 
@@ -320,39 +354,71 @@ var app = angular.module('SortAlg', ['ngSanitize', 'ui.bootstrap']);
     }])
     .controller('SortCtrl', ['$scope', 'Shuffler', 'SortAlgFactory', '$sce',
         function($scope, Shuffler, SortAlgFactory, $sce) {
+
+          $scope.changeAlg = function(method) {
+            var alg = SortAlgFactory.get(method);
+            $scope.algText = alg.getAlgText().toString();
+            $scope.updateSortData($scope.sortSource);
+          };
+
+          $scope.updateSortData = function(sortSource) {
+            $scope.sortData = sortSource.split(',')
+              .map(function(val, idx, array) {
+                return {
+                  val: val,
+                  style: 'fill:rgb(123, 123, 123);stroke:white;stroke-width:1'
+                };
+            });
+          }
+
+          $scope.changeSource = function(source) {
+            var data = $scope.dataSource[source];
+            if (!data) {
+              return;
+            }
+            $scope.sortSource = data.join(',');
+            $scope.updateSortData($scope.sortSource);
+          };
+
+          $scope.trustedCode = function(code) {
+            if (!code) {
+              return '';
+            }
+            return $sce.trustAsHtml("      " + code);
+          };
+
+          $scope.start = function(status) {
+            var alg = SortAlgFactory.get($scope.sortingMethods.selected);
+            if (status == 'Start') {
+              alg.start($scope, $scope.sortData, $scope.interval);
+            } else {
+              alg.stop();
+            }
+          };
+
+          $scope.step = function() {
+            var alg = SortAlgFactory.get($scope.sortingMethods.selected);
+            alg.nextStep($scope, $scope.sortData);
+          }
+
+          $scope.status = 'Start';
+          $scope.interval = 100;
+
           $scope.sortingMethods = {
             options: ['Selection', 'Insertion'],
             selected: 'Selection'
           };
 
-          $scope.interval = 100;
-
           var itemsInSeq =[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
           // var itemsInSeq =[1, 2, 3, 4];
           $scope.dataSource = {
             asc: itemsInSeq,
-            dsc: itemsInSeq.reverse(),
-            random: Shuffler.shuffle(itemsInSeq),
+            dsc: itemsInSeq.concat([]).reverse(),
+            random: Shuffler.shuffle(itemsInSeq.concat([])),
             options: ['asc', 'dsc', 'random', 'input'],
-            selectedType: 'random'
-          }
+            selected: 'random'
+          };
 
-          $scope.sortSource = $scope.dataSource[$scope.dataSource.selectedType].join(',');
-          $scope.sortData = $scope.sortSource.split(',')
-            .map(function(val, idx, array) {
-              return {
-                val: val,
-                style: 'fill:rgb(123, 123, 123);stroke:white;stroke-width:1'
-              };
-          });
-
-          $scope.trustedCode = function(code) {
-            return $sce.trustAsHtml(code);
-          }
-
-          $scope.start = function() {
-            var alg = SortAlgFactory.get($scope.sortingMethods.selected);
-            $scope.algText = alg.getAlgText().toString();
-            alg.start($scope.sortData, $scope.interval);
-          }
+          $scope.changeSource($scope.dataSource.selected);
+          $scope.changeAlg($scope.sortingMethods.selected);
         }]);
