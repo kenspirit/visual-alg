@@ -153,7 +153,12 @@ var app = angular.module('SortAlg', ['ngSanitize', 'ui.bootstrap']);
 
             this.stop = function() {
               clearInterval(this.scope.processing.id);
-              this.scope.processing.status = 'Stop';
+            }
+
+            this.autoStop = function() {
+              this.scope.processing.status = 'Start';
+              this.apply();
+              this.stop();
             }
 
             this.getAlgText = function() {
@@ -182,6 +187,29 @@ var app = angular.module('SortAlg', ['ngSanitize', 'ui.bootstrap']);
             }
           }
 
+          SortAlgBase.prototype.setStyle = function(index, style) {
+            if (index < 0 || index >= this.sortData.length) {
+              return;
+            }
+            this.sortData[index].style = style;
+          }
+
+          SortAlgBase.prototype.setDefaultStyle = function(index) {
+            this.setStyle(index, this.style.default);
+          }
+
+          SortAlgBase.prototype.setCurrentlySeenStyle = function(index) {
+            this.setStyle(index, this.style.currentlySeen);
+          }
+
+          SortAlgBase.prototype.setNextToCompareStyle = function(index) {
+            this.setStyle(index, this.style.nextToCompare + this.style.currentlyCompare);
+          }
+
+          SortAlgBase.prototype.setSmallestInLoopStyle = function(index) {
+            this.setStyle(index, this.style.smallestInLoop + this.style.currentlyCompare);
+          }
+
           return SortAlgBase;
     }])
     .factory('SelectionSort', ['SortAlgBase', function(SortAlgBase) {
@@ -199,50 +227,68 @@ var app = angular.module('SortAlg', ['ngSanitize', 'ui.bootstrap']);
           var currentIdx = this.scope.processing.currentIdx;
           var nextIdx = this.scope.processing.nextIdx;
           var smallestIdx = this.scope.processing.smallestIdx;
+          var isLoopEnd = this.scope.processing.isLoopEnd;
 
           if (this.scope.processing.isLoopEnd == true) {
-            if (currentIdx != smallestIdx) {
-              this.swap(this.sortData, currentIdx, smallestIdx);
-            }
-            this.sortData[smallestIdx].style = this.style.default;
-            this.sortData[currentIdx].style = this.style.default;
-            this.sortData[nextIdx - 1].style = this.style.default;
-            this.apply();
-
             this.scope.processing.isLoopEnd = false;
+
+            // Clear style of current step
+            this.setDefaultStyle(smallestIdx);
+            this.setDefaultStyle(currentIdx);
+            this.setDefaultStyle(nextIdx - 1);
+
             currentIdx++;
 
             this.scope.processing.currentIdx = currentIdx;
             this.scope.processing.smallestIdx = currentIdx;
             this.scope.processing.nextIdx = currentIdx + 1;
+
+            // Init style for next step
+            this.setSmallestInLoopStyle(currentIdx);
+            this.setCurrentlySeenStyle(currentIdx);
+            this.setNextToCompareStyle(this.scope.processing.nextIdx);
+            this.apply();
             return;
           }
 
           if (currentIdx == this.sortData.length) {
             // all items processed
-            this.sortData[currentIdx - 1].style = this.style.default;
-            this.stop();
+            this.setDefaultStyle(currentIdx - 1);
+            this.setDefaultStyle(smallestIdx);
+            this.autoStop();
             return;
           }
 
           if (this.scope.processing.nextIdx == this.sortData.length) {
-            // inner loop complete
             this.scope.processing.isLoopEnd = true;
+
+            // inner loop complete
+            if (currentIdx != smallestIdx) {
+              this.swap(this.sortData, currentIdx, smallestIdx);
+              this.setDefaultStyle(smallestIdx);
+              this.setSmallestInLoopStyle(currentIdx);
+              this.apply();
+            }
             return;
           }
 
-          this.sortData[currentIdx].style = this.style.currentlySeen;
-          this.sortData[smallestIdx].style = this.style.smallestInLoop + this.style.currentlyCompare;
-          this.sortData[nextIdx].style = this.style.nextToCompare + this.style.currentlyCompare;
-          if (nextIdx - 1 != smallestIdx && nextIdx - 1 != currentIdx) {
-              this.sortData[nextIdx - 1].style = this.style.default;
+          if (nextIdx - 1 != smallestIdx || nextIdx - 1 != currentIdx) {
+            this.setDefaultStyle(nextIdx - 1);
           }
+          this.setCurrentlySeenStyle(currentIdx);
+          this.setSmallestInLoopStyle(smallestIdx);
+          this.setNextToCompareStyle(nextIdx);
           this.apply();
 
           if (this.isLarger(this.sortData, smallestIdx, nextIdx)) {
-            this.sortData[smallestIdx].style = this.style.default;
+            this.setDefaultStyle(smallestIdx); // must be before later statement
+            this.setCurrentlySeenStyle(currentIdx);
+
             this.scope.processing.smallestIdx = nextIdx;
+
+            this.setSmallestInLoopStyle(nextIdx);
           }
+          this.apply();
           this.scope.processing.nextIdx++;
         }
 
@@ -326,7 +372,7 @@ var app = angular.module('SortAlg', ['ngSanitize', 'ui.bootstrap']);
 
         if (currentIdx == this.sortData.length) {
           // all items processed
-          this.stop();
+          this.autoStop();
           return;
         }
 
