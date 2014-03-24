@@ -8,6 +8,26 @@ var app = angular.module('SortAlg', ['ngSanitize', 'ui.bootstrap']);
       Shuffler.shuffle = shuffle;
       return Shuffler;
     })
+    .service('WordSplitter', function() {
+      var Splitter = {
+        split: function(word) {
+          var sentence = '';
+          for (var i = 0; i < word.length; i++) {
+            var code = word.charCodeAt(i);
+            if (code >= 'A'.charCodeAt(0) && code <= 'Z'.charCodeAt(0)) {
+              sentence += ' ';
+            }
+            if (i == 0) {
+              sentence += word.charAt(i).toUpperCase();
+            } else {
+              sentence += word.charAt(i);
+            }
+          }
+          return sentence;
+        }
+      }
+      return Splitter;
+    })
     .directive('barChart', function() {
       return {
         restrict: 'E',
@@ -52,104 +72,127 @@ var app = angular.module('SortAlg', ['ngSanitize', 'ui.bootstrap']);
         }
       }
     })
-    .factory('SortAlgBase', ['$rootScope', function($rootScope) {
-      function SortAlgBase(name) {
-          this.name = name;
-          this.sortData = [];
-          this.scope;
-          this.interval = -1;
-
-          this.style = {
-            default: 'fill:rgb(123, 123, 123);stroke:white;stroke-width:1',
-            currentlySeen: 'fill:green;',
-            smallestInLoop: 'fill:red;',
-            nextToCompare: 'fill:blue;'
+    .directive('barLegends', function() {
+      return {
+        restrict: 'E',
+        replace: true,
+        scope: {legends: '='},
+        template: '<svg ng-attr-width="{{graph.width}}" ng-attr-height="{{graph.height}}">'
+          + '  <text ng-repeat="legend in legends" ng-attr-x="0" ng-attr-y="{{y($index)}}" ng-attr-style="{{legend.style}}" font-family="Verdana" font-size="10">{{legend.text}}</text>'
+          + '</svg>',
+        link: function(scope, element, attrs) {
+          scope.graph = {
+            height: 200,
+            width: 200
           };
 
-          this.getName = function() {
-            return this.name;
-          }
+          scope.y = function(index) {
+            return index * 15 + 20;
+          };
+        }
+      }
+    })
+    .factory('SortAlgBase', ['$rootScope', 'WordSplitter',
+      function($rootScope, WordSplitter) {
+        function SortAlgBase(name) {
+            this.name = name;
+            this.sortData = [];
+            this.scope;
+            this.interval = -1;
 
-          this.apply = function() {
-            if (this.interval > 0) {
-              $rootScope.$apply();
-            } else {
-              // var phase = $rootScope.$$phase;
-              setTimeout(function() {$rootScope.$apply();}, 1);
-              // if(phase != '$apply' && phase != '$digest') {
+            this.style = {
+              default: 'fill:rgb(123, 123, 123);stroke:white;stroke-width:1',
+              currentlySeen: 'fill:green;',
+              smallestInLoop: 'fill:red;',
+              nextToCompare: 'fill:blue;'
+            };
+
+            this.getName = function() {
+              return this.name;
+            }
+
+            this.apply = function() {
+              // if (this.interval > 0) {
               //   $rootScope.$apply();
+              // } else {
+                // var phase = $rootScope.$$phase;
+                setTimeout(function() {$rootScope.$apply();}, 1);
+                // if(phase != '$apply' && phase != '$digest') {
+                //   $rootScope.$apply();
+                // }
               // }
             }
-          }
 
-          this.isLarger = function(items, srcIdx, targetIdx) {
-            if (parseInt(items[srcIdx].val) > parseInt(items[targetIdx].val)) {
-              return true;
+            this.isLarger = function(items, srcIdx, targetIdx) {
+              if (parseInt(items[srcIdx].val) > parseInt(items[targetIdx].val)) {
+                return true;
+              }
+              return false;
+            };
+
+            this.swap = function(items, srcIdx, targetIdx) {
+              var tmp = items[srcIdx];
+              items[srcIdx] = items[targetIdx];
+              items[targetIdx] = tmp;
+            };
+
+            this.start = function(scope, items, interval) {
+              this.interval = interval;
+              if (!this.scope) {
+                this.scope = scope;
+                this.sortData = items;
+                this.init();
+              }
+
+              if (interval > 0) {
+                this.scope.processing.id = setInterval(this.step.bind(this), interval);
+              } else {
+                this.step();
+              }
+            };
+
+            this.stop = function() {
+              clearInterval(this.scope.processing.id);
+              this.scope.processing.status = 'Stop';
             }
-            return false;
-          };
 
-          this.swap = function(items, srcIdx, targetIdx) {
-            var tmp = items[srcIdx];
-            items[srcIdx] = items[targetIdx];
-            items[targetIdx] = tmp;
-          };
-
-          this.init = function() {
-            this.scope.processing = {};
-          }
-
-          this.start = function(scope, items, interval) {
-            this.interval = interval;
-            this.scope = scope;
-            this.sortData = items;
-            this.init();
-            if (interval > 0) {
-              this.scope.processing.id = setInterval(this.step.bind(this), interval);
-            } else {
-              this.step();
+            this.getAlgText = function() {
+              return this.sort.toString();
             }
-          };
-
-          this.stop = function() {
-            clearInterval(this.scope.processing.id);
-            this.scope.status = 'Start';
           }
 
-          this.nextStep = function(scope, items) {
-            this.interval = -1;
-            if (!this.scope) {
-              this.scope = scope;
-              this.sortData = items;
-              this.init();
-            }
-            this.step();
+          SortAlgBase.prototype.init = function() {
           }
 
-          this.step = function() {
+          SortAlgBase.prototype.step = function() {
             // to be implemented by child
           };
 
-          this.sort = function(items) {
+          SortAlgBase.prototype.sort = function(items) {
             // to be implemented by child
           };
 
-          this.getAlgText = function() {
-            return this.sort;
+          SortAlgBase.prototype.setLegends = function(legends) {
+            var i = 0;
+            for (var legend in this.style) {
+              legends[i++] = {
+                style: this.style[legend].replace('stroke:white', ''),
+                text: WordSplitter.split(legend)
+              };
+            }
           }
-        }
 
-        return SortAlgBase;
+          return SortAlgBase;
     }])
     .factory('SelectionSort', ['SortAlgBase', function(SortAlgBase) {
         var SelectionSort = new SortAlgBase('Selection');
 
         SelectionSort.init = function() {
-          this.scope.processing = {
-            currentIdx: 0,
-            nextIdx: 1,
-            smallestIdx: 0
-          };
+          this.__proto__.init.call(this);
+
+          this.scope.processing.currentIdx = 0;
+          this.scope.processing.nextIdx = 1;
+          this.scope.processing.smallestIdx = 0;
         }
 
         SelectionSort.step = function() {
@@ -267,11 +310,11 @@ var app = angular.module('SortAlg', ['ngSanitize', 'ui.bootstrap']);
       };
 
       InsertionSort.init = function() {
-        this.scope.processing = {
-          currentIdx: 0,
-          nextIdx: -1,
-          smallestIdx: 0
-        };
+        this.__proto__.init.call(this);
+
+        this.scope.processing.currentIdx = 0;
+        this.scope.processing.nextIdx = -1;
+        this.scope.processing.smallestIdx = 0;
       }
 
       InsertionSort.step = function() {
@@ -357,8 +400,9 @@ var app = angular.module('SortAlg', ['ngSanitize', 'ui.bootstrap']);
 
           $scope.changeAlg = function(method) {
             var alg = SortAlgFactory.get(method);
-            $scope.algText = alg.getAlgText().toString();
+            $scope.algText = alg.getAlgText();
             $scope.updateSortData($scope.sortSource);
+            alg.setLegends($scope.legends);
           };
 
           $scope.updateSortData = function(sortSource) {
@@ -398,10 +442,12 @@ var app = angular.module('SortAlg', ['ngSanitize', 'ui.bootstrap']);
 
           $scope.step = function() {
             var alg = SortAlgFactory.get($scope.sortingMethods.selected);
-            alg.nextStep($scope, $scope.sortData);
+            alg.start($scope, $scope.sortData, -1);
           }
 
-          $scope.status = 'Start';
+          $scope.processing = {
+            status: 'Start'
+          };
           $scope.interval = 100;
 
           $scope.sortingMethods = {
@@ -410,7 +456,6 @@ var app = angular.module('SortAlg', ['ngSanitize', 'ui.bootstrap']);
           };
 
           var itemsInSeq =[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
-          // var itemsInSeq =[1, 2, 3, 4];
           $scope.dataSource = {
             asc: itemsInSeq,
             dsc: itemsInSeq.concat([]).reverse(),
@@ -418,6 +463,8 @@ var app = angular.module('SortAlg', ['ngSanitize', 'ui.bootstrap']);
             options: ['asc', 'dsc', 'random', 'input'],
             selected: 'random'
           };
+
+          $scope.legends = [];
 
           $scope.changeSource($scope.dataSource.selected);
           $scope.changeAlg($scope.sortingMethods.selected);
