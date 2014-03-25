@@ -410,6 +410,11 @@ angular.module('alg.services.sort', ['alg.services'])
       var currentIdx = this.scope.processing.currentIdx;
       var nextIdx = this.scope.processing.nextIdx;
 
+      this.setCurrentlySeenStyle(currentIdx);
+      this.setDefaultStyle(nextIdx - 1);
+      this.setNextToCompareStyle(nextIdx);
+      this.apply();
+
       if (currentIdx === 0) {
         // all items processed
         this.setDefaultStyle(currentIdx);
@@ -428,29 +433,20 @@ angular.module('alg.services.sort', ['alg.services'])
 
         this.scope.processing.currentIdx = currentIdx;
         this.scope.processing.nextIdx = 0;
-
-        this.setCurrentlySeenStyle(this.scope.processing.currentIdx);
-        this.setNextToCompareStyle(this.scope.processing.nextIdx);
+        this.setCurrentlySeenStyle(currentIdx);
+        this.setNextToCompareStyle(0);
         this.apply();
         return;
       }
 
-      this.setCurrentlySeenStyle(currentIdx);
-      this.setNextToCompareStyle(nextIdx);
-      this.apply();
-
       if (this.isLarger(this.sortData, nextIdx, currentIdx)) {
         this.swap(this.sortData, nextIdx, currentIdx);
 
-        this.setDefaultStyle(nextIdx);
-        this.setNextToCompareStyle(nextIdx + 1);
+        this.setNextToCompareStyle(nextIdx);
         this.setCurrentlySeenStyle(currentIdx);
         this.apply();
-      } else {
-        this.setDefaultStyle(nextIdx);
-        this.setNextToCompareStyle(nextIdx + 1);
-        this.apply();
       }
+
       this.scope.processing.nextIdx++;
       return;
     };
