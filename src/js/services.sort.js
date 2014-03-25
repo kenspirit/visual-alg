@@ -250,7 +250,7 @@ angular.module('alg.services.sort', ['alg.services'])
         this.scope.processing.smallestIdx = currentIdx;
 
         this.setCurrentlySeenStyle(this.scope.processing.currentIdx);
-        this.setSmallestInLoopStyle(this.scope.processing.currentIdx);
+        this.setSmallestInLoopStyle(this.scope.processing.smallestIdx);
         this.setNextToCompareStyle(this.scope.processing.nextIdx);
         this.apply();
         return;
@@ -297,8 +297,81 @@ angular.module('alg.services.sort', ['alg.services'])
 
     return InsertionSort;
   }])
-  .factory('SortAlgFactory', ['InsertionSort', 'SelectionSort',
-    function(InsertionSort, SelectionSort) {
+  .factory('BubbleSort', ['SortAlgBase', function(SortAlgBase) {
+    var BubbleSort = new SortAlgBase('Bubble');
+
+    BubbleSort.init = function() {
+      this.constructor.prototype.init.call(this);
+
+      this.scope.processing.currentIdx = this.sortData.length - 1;
+      this.scope.processing.nextIdx = 0;
+    };
+
+    BubbleSort.step = function() {
+      this.constructor.prototype.step.call(this);
+
+      var currentIdx = this.scope.processing.currentIdx;
+      var nextIdx = this.scope.processing.nextIdx;
+
+      if (currentIdx === 0) {
+        // all items processed
+        this.setDefaultStyle(currentIdx);
+        this.setDefaultStyle(nextIdx);
+        this.apply();
+        this.autoStop();
+        return;
+      }
+
+      if (nextIdx === currentIdx) {
+        // Inner loop scan complete.  Start on next unseen item.
+        this.setDefaultStyle(currentIdx);
+        this.apply();
+
+        currentIdx--;
+
+        this.scope.processing.currentIdx = currentIdx;
+        this.scope.processing.nextIdx = 0;
+
+        this.setCurrentlySeenStyle(this.scope.processing.currentIdx);
+        this.setNextToCompareStyle(this.scope.processing.nextIdx);
+        this.apply();
+        return;
+      }
+
+      this.setCurrentlySeenStyle(currentIdx);
+      this.setNextToCompareStyle(nextIdx);
+      this.apply();
+
+      if (this.isLarger(this.sortData, nextIdx, currentIdx)) {
+        this.swap(this.sortData, nextIdx, currentIdx);
+
+        this.setDefaultStyle(nextIdx);
+        this.setNextToCompareStyle(nextIdx + 1);
+        this.setCurrentlySeenStyle(currentIdx);
+        this.apply();
+      } else {
+        this.setDefaultStyle(nextIdx);
+        this.setNextToCompareStyle(nextIdx + 1);
+        this.apply();
+      }
+      this.scope.processing.nextIdx++;
+      return;
+    };
+
+    BubbleSort.sort = function(items) {
+      for (var i = items.length - 1; i > 0; i--) {
+        for (var j = 0; j < i; j++) {
+          if (this.isLarger(items, j, j + 1)) {
+            this.swap(items, j, j + 1);
+          }
+        }
+      }
+    };
+
+    return BubbleSort;
+  }])
+  .factory('SortAlgFactory', ['InsertionSort', 'SelectionSort', 'BubbleSort',
+    function(InsertionSort, SelectionSort, BubbleSort) {
       var algs = {};
       var methodNames = [];
 
@@ -323,6 +396,7 @@ angular.module('alg.services.sort', ['alg.services'])
         algs[algName] = algFn;
       };
 
+      SortAlgFactory.reg(BubbleSort);
       SortAlgFactory.reg(InsertionSort);
       SortAlgFactory.reg(SelectionSort);
 
