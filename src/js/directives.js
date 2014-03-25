@@ -4,15 +4,15 @@ angular.module('alg.directives', [])
       restrict: 'E',
       replace: true,
       scope: {dataset: '='},
-      template: '<svg ng-attr-width="{{graph.width}}" ng-attr-height="{{graph.height}}">'
-        + '    <rect ng-attr-style="{{data.style}}" ng-repeat="data in dataset"'
-        + '        ng-attr-width="{{width()}}"'
-        + '        ng-attr-height="{{height(data.val)}}"'
-        + '        ng-attr-x="{{x($index)}}"'
-        + '        ng-attr-y="{{y(data.val)}}">'
-        + '    </rect>'
-        + '</svg>',
-      link: function(scope, element, attrs) {
+      template: '<svg ng-attr-width="{{graph.width}}" ng-attr-height="{{graph.height}}">' +
+        '    <rect ng-attr-style="{{data.style}}" ng-repeat="data in dataset"' +
+        '        ng-attr-width="{{width()}}"' +
+        '        ng-attr-height="{{height(data.val)}}"' +
+        '        ng-attr-x="{{x($index)}}"' +
+        '        ng-attr-y="{{y(data.val)}}">' +
+        '    </rect>' +
+        '</svg>',
+      link: function(scope) {
         scope.graph = {
           height: 200,
           width: 400
@@ -48,10 +48,10 @@ angular.module('alg.directives', [])
       restrict: 'E',
       replace: true,
       scope: {legends: '='},
-      template: '<svg ng-attr-width="{{graph.width}}" ng-attr-height="{{graph.height}}">'
-        + '  <text ng-repeat="legend in legends" ng-attr-x="0" ng-attr-y="{{y($index)}}" ng-attr-style="{{legend.style}}" font-family="Verdana" font-size="10">{{legend.text}}</text>'
-        + '</svg>',
-      link: function(scope, element, attrs) {
+      template: '<svg ng-attr-width="{{graph.width}}" ng-attr-height="{{graph.height}}">' +
+        '  <text ng-repeat="legend in legends" ng-attr-x="0" ng-attr-y="{{y($index)}}" ng-attr-style="{{legend.style}}" font-family="Verdana" font-size="10">{{legend.text}}</text>' +
+        '</svg>',
+      link: function(scope) {
         scope.graph = {
           height: 200,
           width: 200
@@ -62,4 +62,4 @@ angular.module('alg.directives', [])
         };
       }
     };
-    });
+  });

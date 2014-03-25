@@ -1,6 +1,7 @@
 var app = angular.module('SortAlg',
     ['ngSanitize', 'ui.bootstrap', 'alg.directives', 'alg.services.sort']);
-  app.controller('SortCtrl', ['$scope', 'Shuffler', 'SortAlgFactory', 'SortAlgBase', '$sce',
+
+app.controller('SortCtrl', ['$scope', 'Shuffler', 'SortAlgFactory', 'SortAlgBase', '$sce',
     function($scope, Shuffler, SortAlgFactory, SortAlgBase, $sce) {
 
       $scope.changeAlg = function(method) {
@@ -17,14 +18,14 @@ var app = angular.module('SortAlg',
 
         var alg = SortAlgFactory.get($scope.sortingMethods.selected);
         $scope.sortData = sortSource.split(',')
-          .map(function(val, idx, array) {
+          .map(function(val) {
             return {
               val: val,
               style: alg.style.default
             };
-        });
+          });
         $scope.init();
-      }
+      };
 
       $scope.changeSource = function(source) {
         var data = $scope.dataSource[source];
@@ -39,7 +40,7 @@ var app = angular.module('SortAlg',
         if (!code) {
           return '';
         }
-        return $sce.trustAsHtml("    " + code);
+        return $sce.trustAsHtml('    ' + code);
       };
 
       $scope.start = function(button) {
@@ -54,14 +55,14 @@ var app = angular.module('SortAlg',
       $scope.step = function() {
         var alg = SortAlgFactory.get($scope.sortingMethods.selected);
         alg.start($scope, $scope.sortData, -1);
-      }
+      };
 
       $scope.init = function() {
         $scope.processing = {
           button: 'Start',
           isStarted: false
-        }
-      }
+        };
+      };
 
       $scope.interval = 100;
 
