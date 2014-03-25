@@ -3,6 +3,9 @@
 <script src="angular.js"></script>
 <script src="angular-sanitize.js"></script>
 <script src="ui-bootstrap-tpls-0.10.0.js"></script>
+<script src="directives.js"></script>
+<script src="services.js"></script>
+<script src="services.sort.js"></script>
 <script src="sorting.js"></script>
 <p/>
 <form name="myForm" class="form-horizontal" ng-app="SortAlg" ng-controller="SortCtrl">
@@ -25,7 +28,7 @@
   </div>
   <div class="form-group">
     <div class="col-sm-offset-2 col-sm-10">
-      <button class="btn btn-sm btn-danger" ng-model="processing.status" ng-click="start(processing.status)" btn-checkbox btn-checkbox-false="'Start'" btn-checkbox-true="'Stop'">{{processing.status}}</button>
+      <button class="btn btn-sm btn-danger" ng-model="processing.button" ng-click="start(processing.button)" btn-checkbox btn-checkbox-false="'Start'" btn-checkbox-true="'Stop'">{{processing.button}}</button>
       <button class="btn btn-sm btn-warning" ng-click="step()">Step</button>
     </div>
   </div>
