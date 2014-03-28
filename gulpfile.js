@@ -15,4 +15,9 @@ gulp.task('scripts', function() {
     .pipe(gulp.dest('./dist/'))
 });
 
+gulp.task('watch', function() {
+    // Watch .js files
+    gulp.watch('./src/js/**/*.js', ['scripts']);
+});
+
 gulp.task('default', ['scripts']);

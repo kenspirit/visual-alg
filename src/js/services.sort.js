@@ -29,6 +29,13 @@ angular.module('alg.services.sort', ['alg.services'])
             return false;
           };
 
+          this.isSmaller = function(items, srcIdx, targetIdx) {
+            if (parseInt(items[srcIdx].val) < parseInt(items[targetIdx].val)) {
+              return true;
+            }
+            return false;
+          };
+
           this.swap = function(items, srcIdx, targetIdx) {
             var tmp = items[srcIdx];
             items[srcIdx] = items[targetIdx];
@@ -366,8 +373,149 @@ angular.module('alg.services.sort', ['alg.services'])
 
     return BubbleSort;
   }])
+  .factory('HeapSort', ['SortAlgBase', function(SortAlgBase) {
+    var HeapSort = new SortAlgBase('Heap');
+
+    HeapSort.init = function() {
+      this.constructor.prototype.init.call(this);
+
+      this.scope.processing.isHeapBuilt = false;
+      this.scope.processing.isSwap = true;
+
+      this.setIndex(this.sortData.length);
+    };
+
+    HeapSort.setIndex = function(heapCount) {
+      this.scope.processing.N = heapCount;
+      this.scope.processing.nextIdx = parseInt(heapCount / 2);
+      this.scope.processing.nextSinkIdx = this.scope.processing.nextIdx;
+    };
+
+    HeapSort.step = function() {
+      this.constructor.prototype.step.call(this);
+      var N = this.scope.processing.N;
+      var nextIdx = this.scope.processing.nextIdx;
+
+      if (N === 1) {
+        this.autoStop();
+      }
+
+      if (this.scope.processing.isHeapBuilt === false) {
+        // heap building stage
+        if (!this.sink(this.sortData, nextIdx, N)) {
+          return;
+        }
+
+        var i = this.scope.processing.nextSinkIdx;
+        this.setDefaultStyle(i - 1); // clear highlight of last two compared items  
+        this.setDefaultStyle(i * 2 - 1);
+        this.setDefaultStyle(i * 2);
+        this.apply();
+
+        nextIdx--;
+        this.scope.processing.nextIdx = nextIdx;
+        this.scope.processing.nextSinkIdx = this.scope.processing.nextIdx;
+
+        if (nextIdx === 0) {
+          this.scope.processing.isHeapBuilt = true;
+          this.scope.processing.isSwap = true;
+
+          this.setIndex(N);
+        }
+        return;
+      } else {
+        // sorting stage
+        if (N > 1) {
+          // Swap and sink are broken down to two stages
+          if (this.scope.processing.isSwap === true) {
+            this.setCurrentlySeenStyle(0);
+            this.setNextToCompareStyle(N - 1);
+            this.apply();
+
+            this.swap(this.sortData, 0, N - 1);
+            this.scope.processing.isSwap = false;
+          } else {
+            this.setDefaultStyle(0);
+            this.setDefaultStyle(N - 1);
+            this.apply();
+
+            this.setIndex(--N);
+            this.scope.processing.isHeapBuilt = false;
+          }
+        }
+      }
+    };
+
+    HeapSort.sink = function(items, index, heapCount) {
+      // index and heapCount are 1-based
+      var i = this.scope.processing.nextSinkIdx;
+
+      this.setCurrentlySeenStyle(i - 1); // clear highlight of last two compared items
+      this.setDefaultStyle(parseInt(i / 2) - 1);
+
+      if (i * 2 <= heapCount) {
+        var child = i * 2;
+        if (child < heapCount &&
+            this.isSmaller(items, child - 1, child)) { // convert to 0-based
+          child++; // take the larger child to compare
+        }
+
+        this.setNextToCompareStyle(child - 1);
+        this.apply();
+
+        if (this.isLarger(items, i - 1, child - 1)) { // convert to 0-based
+          return true;
+        }
+
+        this.swap(items, i - 1, child - 1); // convert to 0-based
+
+        this.scope.processing.nextSinkIdx = child;
+        return false;
+      } else {
+        this.setDefaultStyle(i - 1);
+        return true;
+      }
+    };
+
+    HeapSort.sort = function(items) {
+      function sink(items, index, heapCount) {
+        // index and heapCount are 1-based
+        var i = index;
+        while (i * 2 <= heapCount) {
+          var child = i * 2;
+          if (child < heapCount &&
+              this.isSmaller(items, child - 1, child)) { // convert to 0-based
+            child++; // take the larger child to compare
+          }
+          if (this.isLarger(items, i - 1, child - 1)) { // convert to 0-based
+            break;
+          }
+
+          this.swap(items, i - 1, child - 1); // convert to 0-based
+          i = child;
+        }
+      }
+
+      // Build a max heap
+      var N = items.length;
+      for (var i = parseInt(N / 2); i >= 1; i--) {
+        sink(items, i, N);
+      }
+
+      // Do the sort
+      while (N > 1) {
+        this.swap(items, 0, N - 1); // Put the largest item to the end of items
+        sink(items, 1, --N);
+      }
+      return items;
+    };
+
+    return HeapSort;
+  }])
   .factory('SortAlgFactory', ['InsertionSort', 'SelectionSort', 'BubbleSort',
-    function(InsertionSort, SelectionSort, BubbleSort) {
+    'HeapSort',
+    function(InsertionSort, SelectionSort, BubbleSort, HeapSort) {
+      // Shellsort, quicksort, mergesort, heapsort remained
       var algs = {};
       var methodNames = [];
 
@@ -392,6 +540,7 @@ angular.module('alg.services.sort', ['alg.services'])
         algs[algName] = algFn;
       };
 
+      SortAlgFactory.reg(HeapSort);
       SortAlgFactory.reg(BubbleSort);
       SortAlgFactory.reg(InsertionSort);
       SortAlgFactory.reg(SelectionSort);
