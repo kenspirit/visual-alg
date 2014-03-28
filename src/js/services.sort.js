@@ -2,74 +2,74 @@ angular.module('alg.services.sort', ['alg.services'])
   .factory('SortAlgBase', ['$rootScope', 'WordSplitter',
     function($rootScope, WordSplitter) {
       function SortAlgBase(name) {
-          this.name = name;
-          this.sortData = [];
-          this.scope = null;
-          this.interval = -1;
+        this.name = name;
+        this.sortData = [];
+        this.scope = null;
+        this.interval = -1;
 
-          this.style = {
-            default: 'fill:rgb(123, 123, 123);stroke:white;stroke-width:1',
-            currentlySeen: 'fill:green;',
-            smallestInLoop: 'fill:red;',
-            nextToCompare: 'fill:blue;'
-          };
+        this.style = {
+          default: 'fill:rgb(123, 123, 123);stroke:white;stroke-width:1',
+          currentlySeen: 'fill:green;',
+          smallestInLoop: 'fill:red;',
+          nextToCompare: 'fill:blue;'
+        };
 
-          this.getName = function() {
-            return this.name;
-          };
+        this.getName = function() {
+          return this.name;
+        };
 
-          this.apply = function() {
-            setTimeout(function() {$rootScope.$apply();}, 1);
-          };
+        this.apply = function() {
+          setTimeout(function() {$rootScope.$apply();}, 1);
+        };
 
-          this.isLarger = function(items, srcIdx, targetIdx) {
-            if (parseInt(items[srcIdx].val) > parseInt(items[targetIdx].val)) {
-              return true;
-            }
-            return false;
-          };
+        this.isLarger = function(items, srcIdx, targetIdx) {
+          if (parseInt(items[srcIdx].val) > parseInt(items[targetIdx].val)) {
+            return true;
+          }
+          return false;
+        };
 
-          this.isSmaller = function(items, srcIdx, targetIdx) {
-            if (parseInt(items[srcIdx].val) < parseInt(items[targetIdx].val)) {
-              return true;
-            }
-            return false;
-          };
+        this.isSmaller = function(items, srcIdx, targetIdx) {
+          if (parseInt(items[srcIdx].val) < parseInt(items[targetIdx].val)) {
+            return true;
+          }
+          return false;
+        };
 
-          this.swap = function(items, srcIdx, targetIdx) {
-            var tmp = items[srcIdx];
-            items[srcIdx] = items[targetIdx];
-            items[targetIdx] = tmp;
-          };
+        this.swap = function(items, srcIdx, targetIdx) {
+          var tmp = items[srcIdx];
+          items[srcIdx] = items[targetIdx];
+          items[targetIdx] = tmp;
+        };
 
-          this.start = function(scope, items, interval) {
-            this.interval = interval;
-            if (!this.scope || !this.scope.processing.isStarted) {
-              this.scope = scope;
-              this.sortData = items;
-              this.init();
-            }
-
-            if (interval > 0) {
-              this.scope.processing.id = setInterval(this.step.bind(this), interval);
-            } else {
-              this.step();
-            }
-          };
-
-          this.stop = function() {
-            clearInterval(this.scope.processing.id);
-          };
-
-          this.autoStop = function() {
-            this.stop();
+        this.start = function(scope, items, interval) {
+          this.interval = interval;
+          if (!this.scope || !this.scope.processing.isStarted) {
+            this.scope = scope;
+            this.sortData = items;
             this.init();
-          };
+          }
 
-          this.getAlgText = function() {
-            return this.sort.toString();
-          };
-        }
+          if (interval > 0) {
+            this.scope.processing.id = setInterval(this.step.bind(this), interval);
+          } else {
+            this.step();
+          }
+        };
+
+        this.stop = function() {
+          clearInterval(this.scope.processing.id);
+        };
+
+        this.autoStop = function() {
+          this.stop();
+          this.init();
+        };
+
+        this.getAlgText = function() {
+          return this.sort.toString();
+        };
+      }
 
       SortAlgBase.prototype.init = function() {
         this.scope.init();
@@ -85,6 +85,7 @@ angular.module('alg.services.sort', ['alg.services'])
 
       SortAlgBase.prototype.setLegends = function(legends) {
         var i = 0;
+        legends.length = 0; // clear all first
         for (var legend in this.style) {
           legends[i++] = {
             style: this.style[legend].replace('stroke:white', ''),
@@ -314,6 +315,11 @@ angular.module('alg.services.sort', ['alg.services'])
       this.scope.processing.nextIdx = 0;
     };
 
+    BubbleSort.setLegends = function(legends) {
+      delete this.style.smallestInLoop;
+      this.constructor.prototype.setLegends.call(this, legends);
+    };
+
     BubbleSort.step = function() {
       this.constructor.prototype.step.call(this);
 
@@ -383,6 +389,11 @@ angular.module('alg.services.sort', ['alg.services'])
       this.scope.processing.isSwap = true;
 
       this.setIndex(this.sortData.length);
+    };
+
+    HeapSort.setLegends = function(legends) {
+      delete this.style.smallestInLoop;
+      this.constructor.prototype.setLegends.call(this, legends);
     };
 
     HeapSort.setIndex = function(heapCount) {
