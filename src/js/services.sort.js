@@ -523,10 +523,176 @@ angular.module('alg.services.sort', ['alg.services'])
 
     return HeapSort;
   }])
+  .factory('QuickSort', ['SortAlgBase', 'Shuffler', function(SortAlgBase, Shuffler) {
+    var QuickSort = new SortAlgBase('Quick');
+
+    QuickSort.init = function() {
+      this.constructor.prototype.init.call(this);
+
+      this.scope.processing.isShuffled = false;
+      this.scope.processing.lowIdx = 0;
+      this.scope.processing.highIdx = this.sortData.length - 1;
+      this.scope.processing.leftIdx = 1;
+      this.scope.processing.rightIdx = this.sortData.length - 1;
+      this.scope.processing.currentIdx = 0;
+      this.scope.processing.stack = [];
+    };
+
+    QuickSort.setLegends = function(legends) {
+      delete this.style.smallestInLoop;
+      this.constructor.prototype.setLegends.call(this, legends);
+    };
+
+    QuickSort.step = function() {
+      this.constructor.prototype.step.call(this);
+
+      if (this.scope.processing.isShuffled === false) {
+        Shuffler.shuffle(this.sortData);
+        this.apply();
+        this.scope.processing.isShuffled = true;
+        return;
+      }
+
+      var currentIdx = this.scope.processing.currentIdx;
+      var leftIdx = this.scope.processing.leftIdx;
+      var rightIdx = this.scope.processing.rightIdx;
+      var lowIdx = this.scope.processing.lowIdx;
+      var highIdx = this.scope.processing.highIdx;
+
+      if (lowIdx >= highIdx) {
+        // end of current partition section
+        this.setDefaultStyle(leftIdx);
+        this.setDefaultStyle(currentIdx);
+        this.setDefaultStyle(rightIdx);
+        this.apply();
+
+        var stackSize = this.scope.processing.stack.length;
+        if (stackSize === 0) {
+          this.autoStop();
+        } else {
+          var nextStep = this.scope.processing.stack[stackSize - 1];
+
+          this.scope.processing.lowIdx = nextStep.lowIdx;
+          this.scope.processing.highIdx = nextStep.highIdx;
+          this.scope.processing.leftIdx = nextStep.lowIdx + 1;
+          this.scope.processing.rightIdx = nextStep.highIdx;
+          this.scope.processing.currentIdx = nextStep.lowIdx;
+
+          this.scope.processing.stack.length = stackSize - 1; // remove from stack
+        }
+        return;
+      }
+
+      if (leftIdx >= rightIdx) {
+        // partition is done
+        var partition = rightIdx;
+        if (!this.isSmaller(this.sortData, rightIdx, currentIdx)) {
+          partition = rightIdx - 1;
+        }
+        this.swap(this.sortData, currentIdx, partition);
+        this.setDefaultStyle(leftIdx - 1);
+        this.setDefaultStyle(currentIdx);
+        this.setDefaultStyle(rightIdx);
+        this.apply();
+
+        // next to process the left part
+        this.scope.processing.lowIdx = lowIdx;
+        this.scope.processing.highIdx = partition - 1;
+        this.scope.processing.leftIdx = lowIdx + 1;
+        this.scope.processing.rightIdx = this.scope.processing.highIdx;
+        this.scope.processing.currentIdx = lowIdx;
+
+        // put the right part in the stack
+        this.scope.processing.stack[this.scope.processing.stack.length] = {
+          lowIdx: partition + 1,
+          highIdx: highIdx
+        };
+        return;
+      }
+
+      var l = leftIdx;
+      var r = rightIdx;
+
+      if (leftIdx - 1 !== currentIdx) {
+        this.setDefaultStyle(leftIdx - 1);
+      }
+      this.setDefaultStyle(rightIdx + 1);
+
+      this.setCurrentlySeenStyle(currentIdx);
+      this.setNextToCompareStyle(leftIdx);
+      this.setNextToCompareStyle(rightIdx);
+      this.apply();
+
+      if (this.isSmaller(this.sortData, leftIdx, currentIdx)) {
+        // Left idx stop when larger than or equal to compared item
+        leftIdx++;
+      }
+
+      if (this.isSmaller(this.sortData, currentIdx, rightIdx)) {
+        // Right idx stop when smaller than or equal to compared item
+        rightIdx--;
+      }
+
+      if (l === leftIdx && r === rightIdx) {
+        // both index haven't moved.  Need to swap
+        this.swap(this.sortData, leftIdx, rightIdx);
+        leftIdx++;
+        rightIdx--;
+      }
+
+      this.scope.processing.leftIdx = leftIdx;
+      this.scope.processing.rightIdx = rightIdx;
+    };
+
+    QuickSort.sort = function(items) {
+      function partition(items, low, high) {
+        var i = low;
+        var j = high + 1;
+
+        while (true) {
+          while (this.isSmaller(items, ++i, low)) {
+            if (i === high) {
+              break;
+            }
+          }
+
+          while (this.isSmaller(items, low, --j)) {
+            if (j === low) {
+              break;
+            }
+          }
+
+          if (i >= j) {
+            break;
+          }
+
+          this.swap(items, i, j);
+        }
+
+        this.swap(items, low, j);
+        return j;
+      }
+
+      function sort(items, low, high) {
+        if (low >= high) {
+          return;
+        }
+
+        var i = partition(items, low, high);
+        sort(items, low, i - 1);
+        sort(items, i + 1, high);
+      }
+
+      Shuffler.shuffle(items); // Performance guarantee
+      sort(items, 0, items.length - 1);
+    };
+
+    return QuickSort;
+  }])
   .factory('SortAlgFactory', ['InsertionSort', 'SelectionSort', 'BubbleSort',
-    'HeapSort',
-    function(InsertionSort, SelectionSort, BubbleSort, HeapSort) {
-      // Shellsort, quicksort, mergesort, heapsort remained
+    'HeapSort', 'QuickSort',
+    function(InsertionSort, SelectionSort, BubbleSort, HeapSort, QuickSort) {
+      // Shellsort, quicksort, mergesort remained
       var algs = {};
       var methodNames = [];
 
@@ -551,6 +717,7 @@ angular.module('alg.services.sort', ['alg.services'])
         algs[algName] = algFn;
       };
 
+      SortAlgFactory.reg(QuickSort);
       SortAlgFactory.reg(HeapSort);
       SortAlgFactory.reg(BubbleSort);
       SortAlgFactory.reg(InsertionSort);
