@@ -377,14 +377,11 @@ angular.module('alg.services.sort', ['alg.services'])
         this.setSmallestInLoopStyle(nextIdx);
         this.setNextToCompareStyle(nextIdx - 1);
         this.apply();
+        this.scope.processing.nextIdx--;
       } else {
-        this.scope.processing.smallestIdx = nextIdx;
-        this.setDefaultStyle(smallestIdx);
-        this.setSmallestInLoopStyle(nextIdx);
-        this.setNextToCompareStyle(nextIdx - 1);
-        this.apply();
+        this.setDefaultStyle(nextIdx);
+        this.scope.processing.nextIdx = -1;
       }
-      this.scope.processing.nextIdx--;
       return;
     };
 
@@ -395,6 +392,8 @@ angular.module('alg.services.sort', ['alg.services'])
           if (this.isLarger(items, j, min)) {
             this.swap(items, min, j);
             min = j;
+          } else {
+            break;
           }
         }
       }
@@ -631,7 +630,6 @@ angular.module('alg.services.sort', ['alg.services'])
       this.scope.processing.highIdx = this.sortData.length - 1;
       this.scope.processing.leftIdx = 1;
       this.scope.processing.rightIdx = this.sortData.length - 1;
-      this.scope.processing.currentIdx = 0;
       this.scope.processing.stack = [];
     };
 
@@ -650,7 +648,6 @@ angular.module('alg.services.sort', ['alg.services'])
         return;
       }
 
-      var currentIdx = this.scope.processing.currentIdx;
       var leftIdx = this.scope.processing.leftIdx;
       var rightIdx = this.scope.processing.rightIdx;
       var lowIdx = this.scope.processing.lowIdx;
@@ -659,7 +656,7 @@ angular.module('alg.services.sort', ['alg.services'])
       if (lowIdx >= highIdx) {
         // end of current partition section
         this.setDefaultStyle(leftIdx);
-        this.setDefaultStyle(currentIdx);
+        this.setDefaultStyle(lowIdx);
         this.setDefaultStyle(rightIdx);
         this.apply();
 
@@ -673,7 +670,6 @@ angular.module('alg.services.sort', ['alg.services'])
           this.scope.processing.highIdx = nextStep.highIdx;
           this.scope.processing.leftIdx = nextStep.lowIdx + 1;
           this.scope.processing.rightIdx = nextStep.highIdx;
-          this.scope.processing.currentIdx = nextStep.lowIdx;
 
           this.scope.processing.stack.length = stackSize - 1; // remove from stack
         }
@@ -683,12 +679,12 @@ angular.module('alg.services.sort', ['alg.services'])
       if (leftIdx >= rightIdx) {
         // partition is done
         var partition = rightIdx;
-        if (!this.isSmaller(this.sortData, rightIdx, currentIdx)) {
+        if (!this.isSmaller(this.sortData, rightIdx, lowIdx)) {
           partition = rightIdx - 1;
         }
-        this.swap(this.sortData, currentIdx, partition);
+        this.swap(this.sortData, lowIdx, partition);
         this.setDefaultStyle(leftIdx - 1);
-        this.setDefaultStyle(currentIdx);
+        this.setDefaultStyle(lowIdx);
         this.setDefaultStyle(rightIdx);
         this.apply();
 
@@ -697,7 +693,6 @@ angular.module('alg.services.sort', ['alg.services'])
         this.scope.processing.highIdx = partition - 1;
         this.scope.processing.leftIdx = lowIdx + 1;
         this.scope.processing.rightIdx = this.scope.processing.highIdx;
-        this.scope.processing.currentIdx = lowIdx;
 
         // put the right part in the stack
         this.scope.processing.stack[this.scope.processing.stack.length] = {
@@ -710,22 +705,19 @@ angular.module('alg.services.sort', ['alg.services'])
       var l = leftIdx;
       var r = rightIdx;
 
-      if (leftIdx - 1 !== currentIdx) {
-        this.setDefaultStyle(leftIdx - 1);
-      }
+      this.setDefaultStyle(leftIdx - 1);
+      this.setCurrentlySeenStyle(lowIdx);
       this.setDefaultStyle(rightIdx + 1);
-
-      this.setCurrentlySeenStyle(currentIdx);
       this.setNextToCompareStyle(leftIdx);
       this.setNextToCompareStyle(rightIdx);
       this.apply();
 
-      if (this.isSmaller(this.sortData, leftIdx, currentIdx)) {
+      if (this.isSmaller(this.sortData, leftIdx, lowIdx)) {
         // Left idx stop when larger than or equal to compared item
         leftIdx++;
       }
 
-      if (this.isSmaller(this.sortData, currentIdx, rightIdx)) {
+      if (this.isSmaller(this.sortData, lowIdx, rightIdx)) {
         // Right idx stop when smaller than or equal to compared item
         rightIdx--;
       }
