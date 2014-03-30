@@ -634,8 +634,14 @@ angular.module('alg.services.sort', ['alg.services'])
     };
 
     QuickSort.setLegends = function(legends) {
+      var val = this.style.smallestInLoop;
       delete this.style.smallestInLoop;
+      this.style.outOfOrder = val;
       this.constructor.prototype.setLegends.call(this, legends);
+    };
+
+    QuickSort.setOutOfOrderStyle = function(index) {
+      this.setStyle(index, this.style.outOfOrder);
     };
 
     QuickSort.step = function() {
@@ -685,6 +691,7 @@ angular.module('alg.services.sort', ['alg.services'])
         this.swap(this.sortData, lowIdx, partition);
         this.setDefaultStyle(leftIdx - 1);
         this.setDefaultStyle(lowIdx);
+        this.setDefaultStyle(rightIdx + 1);
         this.setDefaultStyle(rightIdx);
         this.apply();
 
@@ -706,20 +713,24 @@ angular.module('alg.services.sort', ['alg.services'])
       var r = rightIdx;
 
       this.setDefaultStyle(leftIdx - 1);
-      this.setCurrentlySeenStyle(lowIdx);
       this.setDefaultStyle(rightIdx + 1);
       this.setNextToCompareStyle(leftIdx);
       this.setNextToCompareStyle(rightIdx);
+      this.setCurrentlySeenStyle(lowIdx);
       this.apply();
 
       if (this.isSmaller(this.sortData, leftIdx, lowIdx)) {
         // Left idx stop when larger than or equal to compared item
         leftIdx++;
+      } else {
+        this.setOutOfOrderStyle(leftIdx);
       }
 
       if (this.isSmaller(this.sortData, lowIdx, rightIdx)) {
         // Right idx stop when smaller than or equal to compared item
         rightIdx--;
+      } else {
+        this.setOutOfOrderStyle(rightIdx);
       }
 
       if (l === leftIdx && r === rightIdx) {
@@ -781,7 +792,7 @@ angular.module('alg.services.sort', ['alg.services'])
   .factory('SortAlgFactory', ['InsertionSort', 'SelectionSort', 'BubbleSort',
     'HeapSort', 'QuickSort',
     function(InsertionSort, SelectionSort, BubbleSort, HeapSort, QuickSort) {
-      // Shellsort, quicksort, mergesort remained
+      // Shellsort, mergesort remained
       var algs = {};
       var methodNames = [];
 
@@ -817,7 +828,10 @@ angular.module('alg.services.sort', ['alg.services'])
 
 var app = angular.module('SortAlg',
     ['ngSanitize', 'ui.bootstrap', 'alg.directives', 'alg.services.sort']);
-
+// app.config(function($interpolateProvider) {
+//   $interpolateProvider.startSymbol('$$');
+//   $interpolateProvider.endSymbol('$$');
+// });
 app.controller('SortCtrl', ['$scope', 'Shuffler', 'SortAlgFactory', 'SortAlgBase', '$sce',
     function($scope, Shuffler, SortAlgFactory, SortAlgBase, $sce) {
 

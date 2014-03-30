@@ -10,9 +10,9 @@ Currently supported algorithms:
 * Insertion Sort
 * Selection Sort
 * Heap Sort
+* Quick Sort
 
 To be implemented:
-* Quick Sort
 * Merge Sort
 * Shell Sort
 

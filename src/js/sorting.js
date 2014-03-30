@@ -1,6 +1,9 @@
 var app = angular.module('SortAlg',
     ['ngSanitize', 'ui.bootstrap', 'alg.directives', 'alg.services.sort']);
-
+// app.config(function($interpolateProvider) {
+//   $interpolateProvider.startSymbol('$$');
+//   $interpolateProvider.endSymbol('$$');
+// });
 app.controller('SortCtrl', ['$scope', 'Shuffler', 'SortAlgFactory', 'SortAlgBase', '$sce',
     function($scope, Shuffler, SortAlgFactory, SortAlgBase, $sce) {
 
