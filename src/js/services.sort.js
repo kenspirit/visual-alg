@@ -537,9 +537,8 @@ angular.module('alg.services.sort', ['alg.services'])
     };
 
     QuickSort.setLegends = function(legends) {
-      var val = this.style.smallestInLoop;
       delete this.style.smallestInLoop;
-      this.style.outOfOrder = val;
+      this.style.outOfOrder = 'fill:red;';
       this.constructor.prototype.setLegends.call(this, legends);
     };
 
