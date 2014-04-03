@@ -8,10 +8,14 @@ app.controller('SortCtrl', ['$scope', 'Shuffler', 'SortAlgFactory', 'SortAlgBase
     function($scope, Shuffler, SortAlgFactory, SortAlgBase, $sce) {
 
       $scope.changeAlg = function(method) {
-        var alg = SortAlgFactory.get(method);
-        $scope.algText = alg.getAlgText();
+        if ($scope.alg) {
+          $scope.alg.cleanUp();
+        }
+        $scope.alg = SortAlgFactory.get(method);
+
+        $scope.algText = $scope.alg.getAlgText();
         $scope.updateSortData($scope.sortSource);
-        alg.setLegends($scope.legends);
+        $scope.alg.setLegends($scope.legends);
       };
 
       $scope.updateSortData = function(sortSource) {
@@ -67,7 +71,7 @@ app.controller('SortCtrl', ['$scope', 'Shuffler', 'SortAlgFactory', 'SortAlgBase
         };
       };
 
-      $scope.interval = 100;
+      $scope.interval = 300;
 
       var regMethods = SortAlgFactory.getAllSortMethods();
       $scope.sortingMethods = {
@@ -86,6 +90,7 @@ app.controller('SortCtrl', ['$scope', 'Shuffler', 'SortAlgFactory', 'SortAlgBase
 
       $scope.legends = [];
 
+      $scope.init();
       $scope.changeSource($scope.dataSource.selected);
       $scope.changeAlg($scope.sortingMethods.selected);
     }]);
