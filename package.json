@@ -1,5 +1,6 @@
 {
   "name": "visual-alg",
+  "main": "./src/sorting.html",
   "version": "0.0.1",
   "description": "Visualization of Algorithm",
   "main": "sorting.js",

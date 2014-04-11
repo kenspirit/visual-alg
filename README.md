@@ -11,10 +11,9 @@ Currently supported algorithms:
 * Selection Sort
 * Heap Sort
 * Quick Sort
-
-To be implemented:
-* Merge Sort
 * Shell Sort
+* Merge Sort (TopDown)
+* Merge Sort (BottomUp)
 
 Demo site: [http://www.thinkingincrowd.me/algorithm/](http://www.thinkingincrowd.me/algorithm/)
 

@@ -694,9 +694,289 @@ angular.module('alg.services.sort', ['alg.services'])
 
     return ShellSort;
   }])
+  .factory('TopDownMergeSort', ['SortAlgBase', function(SortAlgBase) {
+    var TopDownMergeSort = new SortAlgBase('Merge (TopDown)');
+
+    TopDownMergeSort.complete = function() {
+      for (var i in this.sortData) {
+        this.sortData[i].bgStyle = this.style.auxiliaryItem;
+      }
+
+      this.constructor.prototype.complete.call(this);
+    };
+
+    TopDownMergeSort.merge = function(items, low, mid, high) {
+      var tips = 'Merging subarray from low pos ' + (low + 1) + ' to high pos ' +
+        (high + 1);
+
+      var aux = [];
+      for (var k = low; k <= high; k++) {
+        aux[k] = {
+          val: items[k].val
+        };
+      }
+
+      this.operationStacks[this.operationStacks.length] =
+        function(items, low, high, tips) {
+          for (var k = 0; k < items.length; k++) {
+            if (k >= low && k <= high) {
+              items[k].bgVal = items[k].val;
+              items[k].bgStyle = this.style.auxiliaryItem;
+            } else {
+              items[k].bgVal = 0;
+            }
+            items[k].style = this.style.default;
+          }
+          this.setTips(tips +
+            '\nAuxiliary items copied.');
+        }.bind(this, this.sortData, low, high, tips);
+
+
+      function exchange(items, k, ref, tips) {
+        items[k].val = items[ref].bgVal;
+
+        for (var i = 0; i < items.length; i++) {
+          items[i].style = this.style.default;
+          items[i].bgStyle = this.style.auxiliaryItem;
+        }
+
+        items[k].style = this.style.currentlyCompare;
+        items[ref].bgStyle = this.style.currentlyCompare;
+        this.setTips(tips);
+      }
+
+      var i = low, j = mid + 1;
+      for (k = low; k <= high; k++) {
+        var ref = k;
+        var stepTips;
+
+        if (i > mid) {
+          stepTips = 'all left subarray items are copied.';
+          ref = j;
+          j++;
+        } else if (j > high) {
+          stepTips = 'all right subarray items are copied.';
+          ref = i;
+          i++;
+        } else if (this.isSmaller(aux, j, i)) {
+          stepTips = 'left item ' + (i + 1) + ' is larger than right item ' + (j + 1);
+          ref = j;
+          j++;
+        } else {
+          stepTips = 'right item ' + (j + 1) + ' is larger than left item ' + (i + 1);
+          ref = i;
+          i++;
+        }
+        stepTips = '\nCopied item ' + (ref + 1) + ' to item ' +
+          (k + 1) + ' because ' + stepTips;
+        items[k] = aux[ref];
+
+        this.operationStacks[this.operationStacks.length] =
+          exchange.bind(this, this.sortData, k, ref, tips + stepTips);
+      }
+    };
+
+    TopDownMergeSort.recursiveSort = function(items, low, high) {
+      if (high <= low) {
+        return;
+      }
+
+      var mid = low + parseInt((high - low) / 2);
+      this.recursiveSort(items, low, mid);
+      this.recursiveSort(items, mid + 1, high);
+      this.merge(items, low, mid, high);
+    };
+
+    TopDownMergeSort.init = function() {
+      this.recursiveSort(this.shadowData, 0, this.shadowData.length - 1);
+    };
+
+    TopDownMergeSort.setLegends = function(legends) {
+      delete this.style.smallestInLoop;
+      delete this.style.currentlySeen;
+      delete this.style.nextToCompare;
+      this.style.auxiliaryItem = 'fill:#cccccc;stroke:white;stroke-width:1';
+      this.style.currentlyCompare = 'fill:green';
+      this.constructor.prototype.setLegends.call(this, legends);
+    };
+
+    TopDownMergeSort.sort = function(items) {
+      function merge(items, aux, low, mid, high) {
+        for (var k = low; k <= high; k++) {
+          aux[k] = items[k];
+        }
+
+        var i = low, j = mid + 1;
+        for (k = low; k <= high; k++) {
+          if (i > mid) {
+            items[k] = aux[j++];
+          } else if (j > high) {
+            items[k] = aux[i++];
+          } else if (this.isSmaller(aux, j, i)) {
+            items[k] = aux[j++];
+          } else {
+            items[k] = aux[i++];
+          }
+        }
+      }
+
+      function sort(items, aux, low, high) {
+        if (high <= low) {
+          return;
+        }
+
+        var mid = low + parseInt((high - low) / 2);
+        sort(items, aux, low, mid);
+        sort(items, aux, mid + 1, high);
+        merge(items, aux, low, mid, high);
+      }
+
+      var aux = items.concat([]);
+
+      sort(items, aux, 0, items.length - 1);
+    };
+
+    return TopDownMergeSort;
+  }])
+  .factory('BottomUpMergeSort', ['SortAlgBase', function(SortAlgBase) {
+    var BottomUpMergeSort = new SortAlgBase('Merge (BottomUp)');
+
+    BottomUpMergeSort.complete = function() {
+      for (var i in this.sortData) {
+        this.sortData[i].bgStyle = this.style.auxiliaryItem;
+      }
+
+      this.constructor.prototype.complete.call(this);
+    };
+
+    BottomUpMergeSort.merge = function(items, low, mid, high, size) {
+      var tips = 'Merging items for subarray in size ' + size +
+        '.  Low pos ' + (low + 1) + ' high pos ' + (high + 1);
+
+      var aux = [];
+      for (var k = low; k <= high; k++) {
+        aux[k] = {
+          val: items[k].val
+        };
+      }
+
+      this.operationStacks[this.operationStacks.length] =
+        function(items, low, high, tips) {
+          for (var k = 0; k < items.length; k++) {
+            if (k >= low && k <= high) {
+              items[k].bgVal = items[k].val;
+              items[k].bgStyle = this.style.auxiliaryItem;
+            } else {
+              items[k].bgVal = 0;
+            }
+            items[k].style = this.style.default;
+          }
+          this.setTips(tips +
+            '\nAuxiliary items copied.');
+        }.bind(this, this.sortData, low, high, tips);
+
+
+      function exchange(items, k, ref, tips) {
+        items[k].val = items[ref].bgVal;
+
+        for (var i = 0; i < items.length; i++) {
+          items[i].style = this.style.default;
+          items[i].bgStyle = this.style.auxiliaryItem;
+        }
+
+        items[k].style = this.style.currentlyCompare;
+        items[ref].bgStyle = this.style.currentlyCompare;
+        this.setTips(tips);
+      }
+
+      var i = low, j = mid + 1;
+      for (k = low; k <= high; k++) {
+        var ref = k;
+        var stepTips;
+
+        if (i > mid) {
+          stepTips = 'all left subarray items are copied.';
+          ref = j;
+          j++;
+        } else if (j > high) {
+          stepTips = 'all right subarray items are copied.';
+          ref = i;
+          i++;
+        } else if (this.isSmaller(aux, j, i)) {
+          stepTips = 'left item ' + (i + 1) + ' is larger than right item ' + (j + 1);
+          ref = j;
+          j++;
+        } else {
+          stepTips = 'right item ' + (j + 1) + ' is larger than left item ' + (i + 1);
+          ref = i;
+          i++;
+        }
+        stepTips = '\nCopied item ' + (ref + 1) + ' to item ' +
+          (k + 1) + ' because ' + stepTips;
+        items[k] = aux[ref];
+
+        this.operationStacks[this.operationStacks.length] =
+          exchange.bind(this, this.sortData, k, ref, tips + stepTips);
+      }
+    };
+
+    BottomUpMergeSort.init = function() {
+      var items = this.shadowData;
+      var N = items.length;
+
+      for (var size = 1; size < N; size = size + size) {
+        for (var low = 0; low < N - size; low += size + size) {
+          this.merge(items, low, low + size - 1, Math.min(low + size + size - 1, N - 1), size);
+        }
+      }
+    };
+
+    BottomUpMergeSort.setLegends = function(legends) {
+      delete this.style.smallestInLoop;
+      delete this.style.currentlySeen;
+      delete this.style.nextToCompare;
+      this.style.auxiliaryItem = 'fill:#cccccc;stroke:white;stroke-width:1';
+      this.style.currentlyCompare = 'fill:green';
+      this.constructor.prototype.setLegends.call(this, legends);
+    };
+
+    BottomUpMergeSort.sort = function(items) {
+      function merge(items, aux, low, mid, high) {
+        for (var k = low; k <= high; k++) {
+          aux[k] = items[k];
+        }
+
+        var i = low, j = mid + 1;
+        for (k = low; k <= high; k++) {
+          if (i > mid) {
+            items[k] = aux[j++];
+          } else if (j > high) {
+            items[k] = aux[i++];
+          } else if (this.isSmaller(aux, j, i)) {
+            items[k] = aux[j++];
+          } else {
+            items[k] = aux[i++];
+          }
+        }
+      }
+
+      var N = items.length;
+      var aux = items.concat([]);
+
+      for (var size = 1; size < N; size = size + size) {
+        for (var low = 0; low < N - size; low += size + size) {
+          merge(items, aux,
+            low, low + size - 1, Math.min(low + size + size - 1, N - 1));
+        }
+      }
+    };
+
+    return BottomUpMergeSort;
+  }])
   .factory('SortAlgFactory', ['InsertionSort', 'SelectionSort', 'BubbleSort',
-    'HeapSort', 'QuickSort', 'ShellSort',
-    function(InsertionSort, SelectionSort, BubbleSort, HeapSort, QuickSort, ShellSort) {
+    'HeapSort', 'QuickSort', 'ShellSort', 'TopDownMergeSort', 'BottomUpMergeSort',
+    function(InsertionSort, SelectionSort, BubbleSort, HeapSort, QuickSort,
+        ShellSort, TopDownMergeSort, BottomUpMergeSort) {
       // Shellsort, mergesort remained
       var algs = {};
       var methodNames = [];
@@ -722,6 +1002,8 @@ angular.module('alg.services.sort', ['alg.services'])
         algs[algName] = algFn;
       };
 
+      SortAlgFactory.reg(TopDownMergeSort);
+      SortAlgFactory.reg(BottomUpMergeSort);
       SortAlgFactory.reg(ShellSort);
       SortAlgFactory.reg(QuickSort);
       SortAlgFactory.reg(HeapSort);

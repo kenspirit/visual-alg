@@ -3,19 +3,25 @@ angular.module('alg.directives', [])
     return {
       restrict: 'E',
       replace: true,
-      scope: {dataset: '='},
+      scope: {dataset: '=', merge: '='},
       template: '<svg ng-attr-width="{{graph.width}}" ng-attr-height="{{graph.height}}">' +
+        '    <rect ng-show="merge" ng-attr-style="{{data.bgStyle}}" ng-repeat="data in dataset"' +
+        '        ng-attr-width="{{width()}}"' +
+        '        ng-attr-height="{{height(data.bgVal)}}"' +
+        '        ng-attr-x="{{x($index)}}"' +
+        '        ng-attr-y="{{y(data.bgVal)}}">' +
+        '    </rect>' +
         '    <rect ng-attr-style="{{data.style}}" ng-repeat="data in dataset"' +
         '        ng-attr-width="{{width()}}"' +
         '        ng-attr-height="{{height(data.val)}}"' +
         '        ng-attr-x="{{x($index)}}"' +
-        '        ng-attr-y="{{y(data.val)}}">' +
+        '        ng-attr-y="{{auxY(data.val)}}">' +
         '    </rect>' +
         '</svg>',
       link: function(scope) {
         scope.graph = {
-          height: 200,
-          width: 400
+          width: 400,
+          height: 200
         };
 
         scope.width = function() {
@@ -30,7 +36,11 @@ angular.module('alg.directives', [])
             }
           }
 
-          return data / max * scope.graph.height;
+          if (scope.merge) {
+            return data / max * scope.graph.height / 2;
+          } else {
+            return data / max * scope.graph.height;
+          }
         };
 
         scope.x = function(index) {
@@ -39,6 +49,14 @@ angular.module('alg.directives', [])
 
         scope.y = function(data) {
           return scope.graph.height - scope.height(data);
+        };
+
+        scope.auxY = function(data) {
+          if (scope.merge) {
+            return scope.y(data) - scope.graph.height / 2;
+          } else {
+            return scope.y(data);
+          }
         };
       }
     };

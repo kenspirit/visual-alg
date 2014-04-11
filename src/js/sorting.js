@@ -12,6 +12,7 @@ app.controller('SortCtrl', ['$scope', 'Shuffler', 'SortAlgFactory', 'SortAlgBase
           $scope.alg.cleanUp();
         }
         $scope.alg = SortAlgFactory.get(method);
+        $scope.isMerge = method.indexOf('Merge') > -1;
 
         $scope.algText = $scope.alg.getAlgText();
         $scope.updateSortData($scope.sortSource);
@@ -28,7 +29,9 @@ app.controller('SortCtrl', ['$scope', 'Shuffler', 'SortAlgFactory', 'SortAlgBase
           .map(function(val) {
             return {
               val: val,
-              style: alg.style.default
+              style: alg.style.default,
+              bgVal: 0,
+              bgStyle: 'display:none'
             };
           });
         $scope.init();

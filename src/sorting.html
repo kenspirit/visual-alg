@@ -31,11 +31,14 @@
   </div>
   <div class="form-group">
     <div class="col-sm-offset-2 col-sm-4">
-      <bar-chart dataset="sortData"/>
+      <bar-chart dataset="sortData" merge="isMerge"/>
     </div>
     <div class="col-sm-4">
       <bar-legends legends="legends"/>
     </div>
+    <!-- <div class="col-sm-offset-2 col-sm-4" ng-show="isMerge">
+      <bar-chart dataset="sortData"/>
+    </div> -->
   </div>
   <div class="form-group">
     <div class="col-sm-offset-2 col-sm-6">
