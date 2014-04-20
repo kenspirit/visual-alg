@@ -122,7 +122,7 @@ angular.module('alg.services.sort', ['alg.services'])
         this.shadowData = [];
         this.scope = null;
         this.interval = -1;
-        this.operationStacks = [];
+        this.operationQueue = [];
 
         this.style = {
           default: 'fill:rgb(123, 123, 123);stroke:white;stroke-width:1',
@@ -168,7 +168,7 @@ angular.module('alg.services.sort', ['alg.services'])
       SortAlgBase.prototype.swapShadowAndQueueNext = function(srcIdx, targetIdx, styleAndTip) {
         this.swap(this.shadowData, srcIdx, targetIdx);
 
-        this.operationStacks[this.operationStacks.length] =
+        this.operationQueue[this.operationQueue.length] =
           this.swap.bind(this, this.sortData, srcIdx, targetIdx, styleAndTip);
       };
 
@@ -217,7 +217,7 @@ angular.module('alg.services.sort', ['alg.services'])
       };
 
       SortAlgBase.prototype.step = function() {
-        var nextStep = this.operationStacks.splice(0, 1)[0];
+        var nextStep = this.operationQueue.splice(0, 1)[0];
         if (nextStep) {
           nextStep();
           this.apply();
@@ -230,7 +230,7 @@ angular.module('alg.services.sort', ['alg.services'])
         this.sortData = [];
         this.shadowData = [];
         this.interval = -1;
-        this.operationStacks = [];
+        this.operationQueue = [];
       };
 
       SortAlgBase.prototype.sort = function() {
@@ -296,7 +296,7 @@ angular.module('alg.services.sort', ['alg.services'])
             highlightObj.styles[min] = this.style.smallestInLoop;
             highlightObj.styles[i] = this.style.currentlySeen;
 
-            this.operationStacks[this.operationStacks.length] =
+            this.operationQueue[this.operationQueue.length] =
               this.highlightAndTip.bind(this, highlightObj);
             
             if (this.isLarger(this.shadowData, min, j)) {
@@ -355,7 +355,7 @@ angular.module('alg.services.sort', ['alg.services'])
           highlightObj.styles[min] = this.style.smallestInLoop;
           highlightObj.styles[i] = this.style.currentlySeen;
 
-          this.operationStacks[this.operationStacks.length] =
+          this.operationQueue[this.operationQueue.length] =
             this.highlightAndTip.bind(this, highlightObj);
 
           if (this.isLarger(this.shadowData, j, min)) {
@@ -412,7 +412,7 @@ angular.module('alg.services.sort', ['alg.services'])
           highlightObj.styles[j + 1] = this.style.nextToCompare;
           highlightObj.styles[i] = this.style.currentlySeen;
 
-          this.operationStacks[this.operationStacks.length] =
+          this.operationQueue[this.operationQueue.length] =
             this.highlightAndTip.bind(this, highlightObj);
 
           if (this.isLarger(this.shadowData, j, j + 1)) {
@@ -500,7 +500,7 @@ angular.module('alg.services.sort', ['alg.services'])
         styles: {}
       };
 
-      this.operationStacks[this.operationStacks.length] =
+      this.operationQueue[this.operationQueue.length] =
         this.highlightAndTip.bind(this, highlightObj);
     };
 
@@ -555,7 +555,7 @@ angular.module('alg.services.sort', ['alg.services'])
         return val;
       });
 
-      this.operationStacks[this.operationStacks.length] =
+      this.operationQueue[this.operationQueue.length] =
         this.recursiveSort.bind(this, this.shadowData, 0, this.sortData.length - 1, true);
     };
 
@@ -575,7 +575,7 @@ angular.module('alg.services.sort', ['alg.services'])
 
             styleAndTip.styles[i] = this.style.nextToCompare;
             styleAndTip.styles[low] = this.style.currentlySeen;
-            this.operationStacks[this.operationStacks.length] =
+            this.operationQueue[this.operationQueue.length] =
               this.highlightAndTip.bind(this, styleAndTip);
           }
 
@@ -594,7 +594,7 @@ angular.module('alg.services.sort', ['alg.services'])
             styleAndTip.styles[i] = this.style.outOfOrder;
             styleAndTip.styles[j] = this.style.nextToCompare;
             styleAndTip.styles[low] = this.style.currentlySeen;
-            this.operationStacks[this.operationStacks.length] =
+            this.operationQueue[this.operationQueue.length] =
               this.highlightAndTip.bind(this, styleAndTip);
           }
 
@@ -660,7 +660,7 @@ angular.module('alg.services.sort', ['alg.services'])
         styleAndTip.styles[low] = this.style.currentlySeen;
         styleAndTip.styles[i - 1] = this.style.currentlySeen;
 
-        this.operationStacks[this.operationStacks.length] =
+        this.operationQueue[this.operationQueue.length] =
           this.recursiveSort.bind(this, this.sortData, low, i - 1, false, styleAndTip);
 
         styleAndTip = {
@@ -671,7 +671,7 @@ angular.module('alg.services.sort', ['alg.services'])
         styleAndTip.styles[i + 1] = this.style.currentlySeen;
         styleAndTip.styles[high] = this.style.currentlySeen;
 
-        this.operationStacks[this.operationStacks.length] =
+        this.operationQueue[this.operationQueue.length] =
           this.recursiveSort.bind(this, this.sortData, i + 1, high, false, styleAndTip);
 
         this.recursiveSort(items, low, i - 1, true);
@@ -759,7 +759,7 @@ angular.module('alg.services.sort', ['alg.services'])
             highlightObj.styles[k] = this.style.nextToCompare;
             highlightObj.styles[i] = this.style.currentlySeen;
 
-            this.operationStacks[this.operationStacks.length] =
+            this.operationQueue[this.operationQueue.length] =
               this.highlightAndTip.bind(this, highlightObj);
 
             // Insertion sort
@@ -831,7 +831,7 @@ angular.module('alg.services.sort', ['alg.services'])
         };
       }
 
-      this.operationStacks[this.operationStacks.length] =
+      this.operationQueue[this.operationQueue.length] =
         function(items, low, high, tips) {
           for (var k = 0; k < items.length; k++) {
             if (k >= low && k <= high) {
@@ -886,7 +886,7 @@ angular.module('alg.services.sort', ['alg.services'])
           (k + 1) + ' because ' + stepTips;
         items[k] = aux[ref];
 
-        this.operationStacks[this.operationStacks.length] =
+        this.operationQueue[this.operationQueue.length] =
           exchange.bind(this, this.sortData, k, ref, tips + stepTips);
       }
     };
@@ -975,7 +975,7 @@ angular.module('alg.services.sort', ['alg.services'])
         };
       }
 
-      this.operationStacks[this.operationStacks.length] =
+      this.operationQueue[this.operationQueue.length] =
         function(items, low, high, tips) {
           for (var k = 0; k < items.length; k++) {
             if (k >= low && k <= high) {
@@ -1030,7 +1030,7 @@ angular.module('alg.services.sort', ['alg.services'])
           (k + 1) + ' because ' + stepTips;
         items[k] = aux[ref];
 
-        this.operationStacks[this.operationStacks.length] =
+        this.operationQueue[this.operationQueue.length] =
           exchange.bind(this, this.sortData, k, ref, tips + stepTips);
       }
     };
