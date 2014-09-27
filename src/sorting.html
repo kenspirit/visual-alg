@@ -24,9 +24,15 @@
     </div>
   </div>
   <div class="form-group">
-    <div class="col-sm-offset-2 col-sm-10">
+    <div class="col-sm-offset-2 col-sm-2">
       <button class="btn btn-sm btn-danger" ng-model="processing.button" ng-click="start(processing.button)" btn-checkbox btn-checkbox-false="'Start'" btn-checkbox-true="'Stop'">{{processing.button}}</button>
       <button class="btn btn-sm btn-warning" ng-click="step()">Step</button>
+    </div>
+    <div class="col-sm-2" style="font-size: 12px; padding: 0">
+      Step Interval: {{interval}} ms
+      <div class="slider-bar">
+        <div class="slider" style="margin-left: {{leftPos}}px" ng-mousedown="holdSlider($event)" ng-mouseup="releaseSlider($event)" ng-mouseleave="releaseSlider($event)" ng-mousemove="moveSlider($event)"> </div>
+      </div>
     </div>
   </div>
   <div class="form-group">

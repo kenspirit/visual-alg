@@ -96,4 +96,37 @@ app.controller('SortCtrl', ['$scope', 'Shuffler', 'SortAlgFactory', 'SortAlgBase
       $scope.init();
       $scope.changeSource($scope.dataSource.selected);
       $scope.changeAlg($scope.sortingMethods.selected);
+
+      $scope.isHold = false;
+      $scope.lastClientX = 0;
+      $scope.leftPos = 60;
+      $scope.parentWidth = 0;
+      $scope.selfWidth = 0;
+
+      $scope.holdSlider = function($event) {
+        $scope.isHold = true;
+        $scope.parentWidth = $event.target.parentNode.offsetWidth;
+        $scope.selfWidth = $event.target.offsetWidth;
+        $scope.lastClientX = $event.clientX; // Resetting position when holding
+      };
+
+      $scope.releaseSlider = function() {
+        $scope.isHold = false;
+      };
+
+      $scope.moveSlider = function($event) {
+        if ($scope.isHold) {
+          var diff = $event.clientX - $scope.lastClientX;
+          $scope.lastClientX = $event.clientX;
+
+          if ($scope.leftPos + diff < 1) {
+            $scope.leftPos = 1;
+          } else if ($scope.parentWidth <= ($scope.selfWidth + $scope.leftPos + diff)) {
+            $scope.leftPos = $scope.parentWidth - $scope.selfWidth - 1;
+          } else {
+            $scope.leftPos = $scope.leftPos + diff;
+          }
+          $scope.interval = parseInt(1000 * $scope.leftPos / $scope.parentWidth);
+        }
+      };
     }]);

@@ -17,7 +17,7 @@ gulp.task('scripts', function() {
 
 gulp.task('watch', function() {
     // Watch .js files
-    gulp.watch('./src/js/**/*.js', ['scripts']);
+    gulp.watch('./src/js/*.js', ['scripts']);
 });
 
 gulp.task('default', ['scripts']);

@@ -2,10 +2,6 @@ button {
     margin: 0 2 0 2;
 }
 
-.sortFrame {
-
-}
-
 .sortItem {
   background-color: blue;
   border: 1px solid black;
@@ -14,4 +10,21 @@ button {
 
 .compareItem {
   background-color: red;
+}
+
+.slider-bar {
+  background-color: #39b3d7;
+  border-color: #269abc;
+  padding: 0;
+  border-radius: 2px;
+}
+
+.slider {
+  -moz-box-shadow:    0px 0px 1px 0px rgba(0,0,0,0.50);
+  box-shadow:         0px 0px 1px 0px rgba(0,0,0,0.50);
+  background-color: #d9534f;
+  border-color: #d43f3a;
+  border-radius: 1px;
+  width: 20px;
+  height: 13px;
 }
