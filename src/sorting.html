@@ -30,8 +30,8 @@
     </div>
     <div class="col-sm-2" style="font-size: 12px; padding: 0">
       Step Interval: {{interval}} ms
-      <div class="slider-bar">
-        <div class="slider" style="margin-left: {{leftPos}}px" ng-mousedown="holdSlider($event)" ng-mouseup="releaseSlider($event)" ng-mouseleave="releaseSlider($event)" ng-mousemove="moveSlider($event)"> </div>
+      <div class="slider-bar" ng-click="setSlider($event)">
+        <div id="slider" class="slider" style="margin-left: {{marginLeft}}px" ng-mousedown="holdSlider($event)" ng-mouseup="releaseSlider($event)" ng-mouseleave="releaseSlider($event)" ng-mousemove="moveSlider($event)"> </div>
       </div>
     </div>
   </div>

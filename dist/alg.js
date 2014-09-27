@@ -1228,16 +1228,42 @@ app.controller('SortCtrl', ['$scope', 'Shuffler', 'SortAlgFactory', 'SortAlgBase
       $scope.changeSource($scope.dataSource.selected);
       $scope.changeAlg($scope.sortingMethods.selected);
 
+      function getPosition(element) {
+        var xPosition = 0;
+        var yPosition = 0;
+
+        while (element) {
+          xPosition += (element.offsetLeft - element.scrollLeft + element.clientLeft);
+          yPosition += (element.offsetTop - element.scrollTop + element.clientTop);
+          element = element.offsetParent;
+        }
+        return { x: xPosition, y: yPosition };
+      }
+
+      function setInterval(marginLeft, sliderBarWidth) {
+        $scope.interval = parseInt(1000 * marginLeft / sliderBarWidth);
+      }
+
+      function setMarginLeft(marginLeft) {
+        if (marginLeft < 0) {
+          marginLeft = 1;
+        } else if (marginLeft + $scope.sliderWidth >= $scope.sliderBarWidth - 1) {
+          marginLeft = $scope.sliderBarWidth - $scope.sliderWidth - 1;
+        }
+
+        $scope.marginLeft = marginLeft;
+      }
+
       $scope.isHold = false;
       $scope.lastClientX = 0;
-      $scope.leftPos = 60;
-      $scope.parentWidth = 0;
-      $scope.selfWidth = 0;
+      $scope.marginLeft = 60;
+      $scope.sliderBarWidth = 0;
+      $scope.sliderWidth = 0;
 
       $scope.holdSlider = function($event) {
         $scope.isHold = true;
-        $scope.parentWidth = $event.target.parentNode.offsetWidth;
-        $scope.selfWidth = $event.target.offsetWidth;
+        $scope.sliderBarWidth = $event.target.parentNode.offsetWidth;
+        $scope.sliderWidth = $event.target.offsetWidth;
         $scope.lastClientX = $event.clientX; // Resetting position when holding
       };
 
@@ -1245,19 +1271,28 @@ app.controller('SortCtrl', ['$scope', 'Shuffler', 'SortAlgFactory', 'SortAlgBase
         $scope.isHold = false;
       };
 
+      $scope.setSlider = function($event) {
+        if ($event.target.id === 'slider') {
+          return; // Do nothing if clicking on slider
+        }
+
+        $scope.sliderBarWidth = $event.target.offsetWidth;
+        $scope.sliderWidth = $event.target.childNodes[1].offsetWidth;
+
+        var sliderBarPosition = getPosition($event.target),
+            marginLeft = $event.clientX - sliderBarPosition.x - $scope.sliderWidth / 2;
+
+        setMarginLeft(marginLeft);
+        setInterval($scope.marginLeft, $scope.sliderBarWidth);
+      };
+
       $scope.moveSlider = function($event) {
         if ($scope.isHold) {
           var diff = $event.clientX - $scope.lastClientX;
           $scope.lastClientX = $event.clientX;
 
-          if ($scope.leftPos + diff < 1) {
-            $scope.leftPos = 1;
-          } else if ($scope.parentWidth <= ($scope.selfWidth + $scope.leftPos + diff)) {
-            $scope.leftPos = $scope.parentWidth - $scope.selfWidth - 1;
-          } else {
-            $scope.leftPos = $scope.leftPos + diff;
-          }
-          $scope.interval = parseInt(1000 * $scope.leftPos / $scope.parentWidth);
+          setMarginLeft($scope.marginLeft + diff);
+          setInterval($scope.marginLeft, $scope.sliderBarWidth);
         }
       };
     }]);
